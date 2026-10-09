@@ -1,0 +1,23 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPublishedBlog } from '../../lib/content';
+import { href } from '../../lib/href';
+
+export async function getStaticPaths() {
+  return (await getPublishedBlog()).map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+interface Props { entry: CollectionEntry<'blog'> }
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+<BaseLayout title={`${entry.data.title} | Nitesh`} description={entry.data.description}>
+  <main id="main" class="detail-page">
+    <a class="back-link" href={href('/blog/')}>Back to blogs</a>
+    <h1>{entry.data.title}</h1>
+    <time datetime={entry.data.published.toISOString()}>{entry.data.published.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}</time>
+    <p>{entry.data.description}</p>
+    <div class="prose"><Content /></div>
+  </main>
+</BaseLayout>

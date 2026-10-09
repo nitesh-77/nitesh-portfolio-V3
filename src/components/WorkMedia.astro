@@ -1,0 +1,81 @@
+---
+import type { Media } from '../lib/content';
+import { href } from '../lib/href';
+
+interface Props {
+  media: Media;
+  index: number;
+}
+
+const { media, index } = Astro.props;
+---
+<div class="work-media">
+  {media.kind === 'placeholder' ? (
+    <div class="placeholder" aria-hidden="true">
+      <span class="placeholder-index">{String(index).padStart(2, '0')}</span>
+      <span class="placeholder-mark"></span>
+    </div>
+  ) : media.kind === 'image' ? (
+    <img src={href(media.src)} alt={media.alt} loading="lazy" width="1600" height="900" />
+  ) : media.kind === 'video' ? (
+    <video
+      data-loop-media
+      src={href(media.src)}
+      poster={href(media.poster)}
+      aria-label={media.alt}
+      width="1600"
+      height="900"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="metadata"
+    />
+  ) : (() => {
+    const exhaustive: never = media;
+    return exhaustive;
+  })()}
+</div>
+
+<script>
+  const videos = document.querySelectorAll<HTMLVideoElement>('[data-loop-media]');
+  const visible = new Set<HTMLVideoElement>();
+
+  function update(video: HTMLVideoElement) {
+    if (!document.hidden && visible.has(video)) {
+      video.muted = true;
+      void video.play().then(() => {
+        video.controls = false;
+      }).catch((error: unknown) => {
+        video.controls = true;
+        console.warn('Project preview playback could not start:', video.currentSrc, error);
+      });
+    } else {
+      video.pause();
+    }
+  }
+
+  const observer = 'IntersectionObserver' in window ? new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!(entry.target instanceof HTMLVideoElement)) continue;
+      if (entry.isIntersecting) visible.add(entry.target);
+      else visible.delete(entry.target);
+      update(entry.target);
+    }
+  }, { threshold: 0 }) : null;
+
+  videos.forEach((video) => {
+    video.muted = true;
+    video.addEventListener('error', () => {
+      video.controls = true;
+      console.warn('Project preview could not load:', video.currentSrc, video.error);
+    });
+    if (observer) observer.observe(video);
+    else {
+      visible.add(video);
+      update(video);
+    }
+  });
+  document.addEventListener('visibilitychange', () => videos.forEach(update));
+  window.addEventListener('pageshow', () => videos.forEach(update));
+</script>

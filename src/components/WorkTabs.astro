@@ -1,0 +1,77 @@
+---
+import WorkCard from './WorkCard.astro';
+import type { Work } from '../lib/content';
+
+interface Props { entries: Work[] }
+const { entries } = Astro.props;
+const projects = entries.filter((entry) => entry.data.kind === 'project');
+const contributions = entries.filter((entry) => entry.data.kind === 'oss');
+---
+<div class="work-tabs" data-work-tabs>
+  <nav class="tab-list" aria-label="Work categories">
+    <a id="projects-tab" class="tab" href="#projects-panel">projects</a>
+    <a id="oss-tab" class="tab" href="#oss-panel">oss contributions</a>
+  </nav>
+  <section id="projects-panel" class="work-panel" aria-labelledby="projects-heading">
+    <h2 id="projects-heading" class="section-heading">Projects</h2>
+    <div class="work-grid">
+      {projects.map((entry, index) => <WorkCard entry={entry} index={index + 1} />)}
+    </div>
+  </section>
+  <section id="oss-panel" class="work-panel" aria-labelledby="oss-heading">
+    <h2 id="oss-heading" class="section-heading">Open source contributions</h2>
+    <div class="work-grid">
+      {contributions.map((entry, index) => <WorkCard entry={entry} index={index + 1} />)}
+    </div>
+  </section>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-work-tabs]').forEach((root) => {
+    const list = root.querySelector<HTMLElement>('.tab-list');
+    const tabs = Array.from(root.querySelectorAll<HTMLAnchorElement>('.tab'));
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('.work-panel'));
+    if (!list || tabs.length !== panels.length || tabs.length === 0) return;
+
+    function activate(index: number, focus = false) {
+      tabs.forEach((tab, tabIndex) => {
+        const selected = tabIndex === index;
+        tab.setAttribute('aria-selected', String(selected));
+        tab.tabIndex = selected ? 0 : -1;
+        const panel = panels[tabIndex];
+        if (panel) panel.hidden = !selected;
+        if (selected && focus) tab.focus();
+      });
+    }
+
+    list.setAttribute('role', 'tablist');
+    tabs.forEach((tab, index) => {
+      const panel = panels[index];
+      if (!panel) return;
+      tab.setAttribute('role', 'tab');
+      tab.setAttribute('aria-controls', panel.id);
+      panel.setAttribute('role', 'tabpanel');
+      panel.setAttribute('aria-labelledby', tab.id);
+      panel.tabIndex = 0;
+      tab.addEventListener('click', (event) => {
+        event.preventDefault();
+        activate(index);
+      });
+      tab.addEventListener('keydown', (event) => {
+        let next = index;
+        switch (event.key) {
+          case 'ArrowRight': next = (index + 1) % tabs.length; break;
+          case 'ArrowLeft': next = (index - 1 + tabs.length) % tabs.length; break;
+          case 'Home': next = 0; break;
+          case 'End': next = tabs.length - 1; break;
+          case ' ': break;
+          default: return;
+        }
+        event.preventDefault();
+        activate(next, true);
+      });
+    });
+    root.dataset.enhanced = 'true';
+    activate(0);
+  });
+</script>
