@@ -1,8 +1,10 @@
 ---
 kind: oss
 title: crawl4ai
-description: "Encoding detection moved to a worker thread, plus a fix for tuple mutation in content filtering."
+description: "Encoding detection moved to a worker thread, plus a fix for tuple mutation in deep-crawl URL filtering."
 order: 2
 media:
-  kind: placeholder
+  kind: image
+  src: /media/crawl4ai.webp
+  alt: "Real Crawl4AI HTTP crawl logs showing successful extraction of Python's asyncio documentation, with a code excerpt from the generated Markdown"
 ---

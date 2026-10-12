@@ -4,5 +4,7 @@ title: torrra
 description: "A TOML parsing fallback and conditional dependencies to restore compatibility for older Python environments."
 order: 3
 media:
-  kind: placeholder
+  kind: image
+  src: /media/torrra.webp
+  alt: "Torrra's terminal interface displaying Arch Linux torrent search results, captured from the project's official demo"
 ---
