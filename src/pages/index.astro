@@ -45,6 +45,9 @@ const entries = await getWork();
 </BaseLayout>
 
 <style>
+  .homepage:has(:global(#oss-tab[aria-selected='true'])) .more-projects {
+    display: none;
+  }
   .more-projects {
     margin: 64px auto 0;
     text-align: center;
