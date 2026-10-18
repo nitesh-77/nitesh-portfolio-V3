@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 
 export default defineConfig({
-  site: 'https://nitesh.surge.sh',
+  site: 'https://nitesh77.surge.sh',
   base: '/',
   output: 'static',
   trailingSlash: 'always',
