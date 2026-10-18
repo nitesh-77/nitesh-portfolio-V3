@@ -19,7 +19,7 @@ const { eyebrow, title, description, repository, weightsUrl } = Astro.props;
     </a>
     <div class="story-project-links">
       <a
-        class="story-logo-link"
+        class="project-source-link"
         href={repository}
         aria-label="View project code on GitHub"
         title="Project code on GitHub"
@@ -29,7 +29,7 @@ const { eyebrow, title, description, repository, weightsUrl } = Astro.props;
       </a>
       {weightsUrl && (
         <a
-          class="story-logo-link"
+          class="project-source-link"
           href={weightsUrl}
           aria-label="View trained weights on Hugging Face"
           title="Trained weights on Hugging Face"
@@ -118,24 +118,6 @@ const { eyebrow, title, description, repository, weightsUrl } = Astro.props;
     align-items: center;
     gap: 16px;
     margin-left: auto;
-  }
-
-  .story-logo-link {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    min-width: 44px;
-    min-height: 44px;
-    font-size: 12px;
-    line-height: 1.2;
-  }
-
-  .story-logo-link img {
-    display: block;
-    width: 36px;
-    height: 36px;
   }
 
   .story-nav a:hover {

@@ -58,12 +58,13 @@ const examples = [
       <span aria-hidden="true">← </span>Back home
     </a>
     <a
-      class="github-link"
+      class="project-source-link"
       href="https://github.com/nitesh-77/Agentic-Researcher"
       aria-label="View Agentic-Researcher on GitHub"
       title="Project code on GitHub"
     >
       <img src={href('/media/brands/github.svg')} width="36" height="36" alt="" />
+      <span>GitHub</span>
     </a>
   </nav>
   <header>
@@ -411,19 +412,6 @@ const examples = [
   }
   nav a:hover {
     text-decoration: underline;
-  }
-  .github-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 44px;
-    min-height: 44px;
-    padding: 0;
-  }
-  .github-link img {
-    display: block;
-    width: 36px;
-    height: 36px;
   }
   header {
     max-width: 760px;

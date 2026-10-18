@@ -56,6 +56,44 @@ video {
   transform: translateY(0);
 }
 
+:root nav[aria-label='Project navigation'] a.project-source-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  color: var(--text);
+  font:
+    400 12px/1.2 'Fira Mono',
+    monospace;
+  text-decoration: none;
+}
+:root nav[aria-label='Project navigation'] a.project-source-link img {
+  display: block;
+  width: 36px;
+  height: 36px;
+}
+:root nav[aria-label='Project navigation'] a.project-source-link span {
+  color: inherit;
+  font: inherit;
+}
+:root nav[aria-label='Project navigation'] a.project-source-link:hover,
+:root nav[aria-label='Project navigation'] a.project-source-link:focus-visible {
+  color: var(--text);
+  text-decoration: none;
+}
+:root nav[aria-label='Project navigation'] a.project-source-link:hover span,
+:root nav[aria-label='Project navigation'] a.project-source-link:focus-visible span {
+  text-decoration: underline;
+}
+:root nav[aria-label='Project navigation'] a.project-source-link:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 6px;
+}
+
 .homepage {
   padding: 64px 32px 110px;
 }

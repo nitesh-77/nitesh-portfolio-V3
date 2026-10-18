@@ -35,12 +35,13 @@ const contributions: readonly Contribution[] = [
       <span aria-hidden="true">← </span>Back to contributions
     </a>
     <a
-      class="github-link"
+      class="project-source-link"
       href="https://github.com/unclecode/crawl4ai"
       aria-label="View crawl4ai on GitHub"
       title="crawl4ai on GitHub"
     >
-      <img src={href('/media/crawl4ai/github.png')} width="36" height="36" alt="" />
+      <img src={href('/media/brands/github.svg')} width="36" height="36" alt="" />
+      <span>GitHub</span>
     </a>
   </nav>
 
@@ -86,19 +87,6 @@ const contributions: readonly Contribution[] = [
   }
   nav a:hover {
     text-decoration: underline;
-  }
-  .github-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 44px;
-    min-height: 44px;
-    padding: 0;
-  }
-  .github-link img {
-    display: block;
-    width: 36px;
-    height: 36px;
   }
   header {
     margin: 36px 0 40px;
