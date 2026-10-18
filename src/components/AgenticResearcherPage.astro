@@ -1,0 +1,814 @@
+---
+import { href } from '../lib/href';
+
+const nodes = [
+  {
+    id: 'plan',
+    artwork: href('/media/agentic-researcher/workflow/plan.webp'),
+    label: 'Plan',
+    sentence: 'It breaks the question into topics to investigate.',
+  },
+  {
+    id: 'research',
+    artwork: href('/media/agentic-researcher/workflow/research.webp'),
+    label: 'Research',
+    sentence: 'It searches for the current topic and chooses up to five pages to read.',
+  },
+  {
+    id: 'scrape',
+    artwork: href('/media/agentic-researcher/workflow/scrape.webp'),
+    label: 'Scrape',
+    sentence: 'It removes page clutter and saves the text as searchable passages.',
+  },
+  {
+    id: 'write',
+    artwork: href('/media/agentic-researcher/workflow/write.webp'),
+    label: 'Write',
+    sentence: 'It finds relevant passages and writes a report with links to its sources.',
+  },
+  {
+    id: 'review',
+    artwork: href('/media/agentic-researcher/workflow/review.webp'),
+    label: 'Review',
+    sentence:
+      'It reads the draft and either accepts it or returns to research. There are at most three passes.',
+  },
+];
+const examples = [
+  {
+    id: 'answer',
+    label: 'Cited answer',
+    src: href('/media/agentic-researcher/cited-answer.webp'),
+    alt: 'Cropped application screenshot of a saved KV-cache research answer, with named techniques and a Sources referenced section.',
+    caption: 'An answer from a saved run about KV-cache techniques, with the sources it used.',
+  },
+  {
+    id: 'follow-up',
+    label: 'Follow-up',
+    src: href('/media/agentic-researcher/follow-up.webp'),
+    alt: 'Cropped application screenshot showing the follow-up question explain one and an answer about sliding-window attention with source references.',
+    caption: 'I asked it to explain one technique. It answered using the pages already collected.',
+  },
+];
+---
+
+<article class="agentic-page" data-agentic-page>
+  <nav aria-label="Project navigation">
+    <a href={href('/')}>
+      <span aria-hidden="true">← </span>Back home
+    </a>
+    <a
+      class="github-link"
+      href="https://github.com/nitesh-77/Agentic-Researcher"
+      aria-label="View Agentic-Researcher on GitHub"
+      title="Project code on GitHub"
+    >
+      <img src={href('/media/brands/github.svg')} width="36" height="36" alt="" />
+    </a>
+  </nav>
+  <header>
+    <h1>Agentic-Researcher</h1>
+    <p class="intro">
+      I built an assistant that searches the web, writes a report, and answers questions from what
+      it found.
+    </p>
+  </header>
+
+  <section class="workflow" aria-labelledby="workflow-title">
+    <div class="workflow-heading">
+      <h2 id="workflow-title">Following one question</h2>
+      <span class="instruction">Illustration · KV-cache research</span>
+    </div>
+    <div
+      class="graph"
+      data-graph
+      role="group"
+      aria-label="LangGraph research workflow"
+      aria-describedby="graph-description"
+    >
+      <canvas data-connections aria-hidden="true"></canvas>
+      {nodes.map((node) => (
+        <button
+          type="button"
+          class={`node node-${node.id}`}
+          data-node={node.id}
+          aria-label={node.label}
+          aria-pressed={node.id === 'research' ? 'true' : 'false'}
+          aria-controls={`node-${node.id}`}
+          disabled
+        >
+          <span class="stage-label">{node.label}</span>
+          <span class="material" aria-hidden="true">
+            <img src={node.artwork} alt="" aria-hidden="true" width="1536" height="1024" />
+          </span>
+        </button>
+      ))}
+      <span class="retry" aria-hidden="true">
+        Another pass?
+        <br />
+        <span>up to 3 passes</span>
+      </span>
+      <span class="finished" data-output>
+        Report ready
+      </span>
+    </div>
+    <p id="graph-description" class="graph-description">
+      Plan → Research → Scrape → Write → Review. Review can return to Research, for up to three
+      passes, or accept the report.
+    </p>
+    <div class="stage-caption" aria-live="polite" aria-atomic="true">
+      {nodes.map((node) => (
+        <p id={`node-${node.id}`} data-node-panel={node.id} hidden={node.id !== 'research'}>
+          <span>{node.label}.</span> {node.sentence}
+        </p>
+      ))}
+    </div>
+    <noscript>
+      <ul class="no-script-nodes">
+        {nodes.map((node) => (
+          <li>
+            <strong>{node.label}.</strong> {node.sentence}
+          </li>
+        ))}
+      </ul>
+    </noscript>
+  </section>
+
+  <section class="examples" aria-labelledby="examples-title">
+    <div class="example-copy">
+      <h2 id="examples-title">What it produced</h2>
+      <div
+        class="example-controls"
+        role="group"
+        aria-label="Choose application example"
+        data-enhanced-only
+        hidden
+      >
+        {examples.map((example, index) => (
+          <button
+            type="button"
+            data-example={example.id}
+            aria-pressed={index === 0 ? 'true' : 'false'}
+            aria-controls={`example-${example.id}`}
+          >
+            {example.label}
+          </button>
+        ))}
+      </div>
+      <p class="example-context">
+        These are stills from my application recording. Open either image to read it.
+      </p>
+    </div>
+    <div class="example-figures">
+      {examples.map((example) => (
+        <figure data-example-panel={example.id} id={`example-${example.id}`}>
+          <a
+            href={example.src}
+            class="screenshot-link"
+            data-expand
+            aria-label={`Open full-size ${example.label.toLowerCase()} screenshot`}
+          >
+            <img
+              data-example-image
+              src={example.src}
+              alt={example.alt}
+              width="660"
+              height="756"
+              loading="lazy"
+            />
+            <span class="expand-label" aria-hidden="true">
+              Open image ↗
+            </span>
+          </a>
+          <figcaption>{example.caption}</figcaption>
+        </figure>
+      ))}
+    </div>
+    <p class="review-note">
+      The review step reads the draft. It does not independently check every claim against the
+      original pages.
+    </p>
+  </section>
+  <dialog aria-label="Full-size application screenshot" data-image-dialog>
+    <form method="dialog">
+      <button type="submit">Close ×</button>
+    </form>
+    <img data-dialog-image alt="" />
+  </dialog>
+</article>
+
+<script>
+  const page = document.querySelector<HTMLElement>('[data-agentic-page]');
+  if (page) {
+    const nodes = Array.from(page.querySelectorAll<HTMLButtonElement>('[data-node]')).flatMap(
+      (button) => {
+        const id = button.dataset.node;
+        const panel = page.querySelector<HTMLElement>(`[data-node-panel="${id}"]`);
+        return id && panel ? [{ id, button, panel }] : [];
+      },
+    );
+    const examples = Array.from(page.querySelectorAll<HTMLButtonElement>('[data-example]')).flatMap(
+      (button) => {
+        const id = button.dataset.example;
+        const panel = page.querySelector<HTMLElement>(`[data-example-panel="${id}"]`);
+        return id && panel ? [{ id, button, panel }] : [];
+      },
+    );
+    let selectedNode = nodes.find((node) => node.id === 'research');
+    let selectedExample = examples.find((example) => example.id === 'answer');
+    const graph = page.querySelector<HTMLElement>('[data-graph]');
+    const canvas = page.querySelector<HTMLCanvasElement>('[data-connections]');
+    let context: CanvasRenderingContext2D | null = null;
+    try {
+      context = canvas?.getContext('2d') ?? null;
+    } catch {
+      context = null;
+    }
+    if (!context) page.dataset.connections = 'unavailable';
+
+    function drawConnections() {
+      if (!graph || !canvas || !context) return;
+      const bounds = graph.getBoundingClientRect();
+      const scale = window.devicePixelRatio || 1;
+      canvas.width = Math.round(bounds.width * scale);
+      canvas.height = Math.round(bounds.height * scale);
+      context.setTransform(scale, 0, 0, scale, 0, 0);
+      context.clearRect(0, 0, bounds.width, bounds.height);
+      const positions = new Map(
+        Array.from(graph.querySelectorAll<HTMLElement>('[data-node], [data-output]')).map(
+          (element) => {
+            const rect = element.getBoundingClientRect();
+            return [
+              element.dataset.node ?? 'report',
+              {
+                left: rect.left - bounds.left,
+                right: rect.right - bounds.left,
+                top: rect.top - bounds.top,
+                bottom: rect.bottom - bounds.top,
+                x: rect.left - bounds.left + rect.width / 2,
+                y: rect.top - bounds.top + rect.height / 2,
+              },
+            ];
+          },
+        ),
+      );
+      const edges = [
+        { from: 'plan', to: 'research', kind: 'forward' },
+        { from: 'research', to: 'scrape', kind: 'forward' },
+        { from: 'scrape', to: 'write', kind: 'forward' },
+        { from: 'write', to: 'review', kind: 'forward' },
+        { from: 'review', to: 'research', kind: 'retry' },
+        { from: 'review', to: 'report', kind: 'finish' },
+      ];
+      const mobile = window.matchMedia('(max-width: 760px)').matches;
+      for (const { from, to, kind } of edges) {
+        const start = positions.get(from);
+        const end = positions.get(to);
+        if (!start || !end) continue;
+        const retry = kind === 'retry';
+        const vertical = mobile ? from === 'research' || from === 'write' : from === 'scrape';
+        let points: { x: number; y: number }[];
+        if (retry) {
+          const laneY = 220;
+          points = mobile
+            ? [
+                { x: start.right + 8, y: start.y - 26 },
+                { x: bounds.width - 2, y: start.y - 26 },
+                { x: bounds.width - 2, y: end.y },
+                { x: end.right + 6, y: end.y },
+              ]
+            : [
+                { x: start.x, y: start.top - 8 },
+                { x: start.x, y: laneY },
+                { x: end.x, y: laneY },
+                { x: end.x, y: end.bottom + 8 },
+              ];
+        } else if (vertical) {
+          const direction = end.y > start.y ? 1 : -1;
+          const startY = direction > 0 ? start.bottom + 7 : start.top - 7;
+          const endY = direction > 0 ? end.top - 8 : end.bottom + 8;
+          const middleY = (startY + endY) / 2;
+          points = [
+            { x: start.x, y: startY },
+            { x: start.x, y: middleY },
+            { x: end.x, y: middleY },
+            { x: end.x, y: endY },
+          ];
+        } else {
+          const direction = end.x > start.x ? 1 : -1;
+          const startX = direction > 0 ? start.right + 8 : start.left - 8;
+          const endX = direction > 0 ? end.left - 9 : end.right + 9;
+          const middleX = (startX + endX) / 2;
+          points = [
+            { x: startX, y: start.y },
+            { x: middleX, y: start.y },
+            { x: middleX, y: end.y },
+            { x: endX, y: end.y },
+          ];
+        }
+        context.strokeStyle = retry ? '#c0a364' : '#b7bcb3';
+        context.fillStyle = context.strokeStyle;
+        context.lineWidth = 1;
+        context.setLineDash(retry ? [3, 5] : []);
+        context.beginPath();
+        points.forEach((point, index) =>
+          index === 0 ? context.moveTo(point.x, point.y) : context.lineTo(point.x, point.y),
+        );
+        context.stroke();
+        const endPoint = points.at(-1);
+        const beforeEnd = points.at(-2);
+        if (!endPoint || !beforeEnd) continue;
+        const angle = Math.atan2(endPoint.y - beforeEnd.y, endPoint.x - beforeEnd.x);
+        context.setLineDash([]);
+        context.beginPath();
+        context.moveTo(endPoint.x, endPoint.y);
+        context.lineTo(
+          endPoint.x - 5 * Math.cos(angle - Math.PI / 6),
+          endPoint.y - 5 * Math.sin(angle - Math.PI / 6),
+        );
+        context.lineTo(
+          endPoint.x - 5 * Math.cos(angle + Math.PI / 6),
+          endPoint.y - 5 * Math.sin(angle + Math.PI / 6),
+        );
+        context.closePath();
+        context.fill();
+      }
+    }
+
+    for (const node of nodes) {
+      node.button.disabled = false;
+      node.button.addEventListener('click', () => {
+        selectedNode = node;
+        for (const item of nodes) {
+          item.button.setAttribute('aria-pressed', String(item === selectedNode));
+          item.panel.hidden = item !== selectedNode;
+        }
+        drawConnections();
+      });
+    }
+    for (const example of examples) {
+      example.panel.hidden = example !== selectedExample;
+      example.button.addEventListener('click', () => {
+        selectedExample = example;
+        for (const item of examples) {
+          item.button.setAttribute('aria-pressed', String(item === selectedExample));
+          item.panel.hidden = item !== selectedExample;
+        }
+      });
+    }
+    for (const element of page.querySelectorAll<HTMLElement>('[data-enhanced-only]'))
+      element.hidden = false;
+    const dialog = page.querySelector<HTMLDialogElement>('[data-image-dialog]');
+    const dialogImage = page.querySelector<HTMLImageElement>('[data-dialog-image]');
+    if (dialog && dialogImage && typeof dialog.showModal === 'function') {
+      for (const link of page.querySelectorAll<HTMLAnchorElement>('[data-expand]')) {
+        link.addEventListener('click', (event) => {
+          const image = link.querySelector('img');
+          if (!image || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+          event.preventDefault();
+          dialogImage.src = link.href;
+          dialogImage.alt = image.alt;
+          dialog.showModal();
+        });
+      }
+      dialog.addEventListener('click', (event) => {
+        if (event.target !== dialog) return;
+        const bounds = dialog.getBoundingClientRect();
+        if (
+          event.clientX < bounds.left ||
+          event.clientX > bounds.right ||
+          event.clientY < bounds.top ||
+          event.clientY > bounds.bottom
+        )
+          dialog.close();
+      });
+    }
+    if (graph && context) {
+      new ResizeObserver(drawConnections).observe(graph);
+      void document.fonts.ready.then(drawConnections);
+    }
+  }
+</script>
+
+<style>
+  .agentic-page {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 48px 28px 80px;
+    font:
+      17px/1.6 'Fira Mono',
+      monospace;
+  }
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+  }
+  nav a {
+    padding: 8px 0;
+    text-decoration: none;
+  }
+  nav a:hover {
+    text-decoration: underline;
+  }
+  .github-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+  .github-link img {
+    display: block;
+    width: 36px;
+    height: 36px;
+  }
+  header {
+    max-width: 760px;
+    margin: 48px 0 52px;
+  }
+  h1 {
+    margin: 0 0 20px;
+    font-family: var(--sans);
+    font-size: 52.8px;
+    line-height: 1.1;
+    letter-spacing: -0.035em;
+    overflow-wrap: anywhere;
+  }
+  .intro {
+    margin: 0;
+    font:
+      italic 28.8px/1.4 Georgia,
+      serif;
+    color: var(--muted);
+    text-align: left;
+    text-wrap: pretty;
+  }
+  h2 {
+    margin: 0;
+    font: 500 23px/1.4 var(--sans);
+    letter-spacing: -0.015em;
+  }
+  .workflow-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .instruction {
+    color: #979b98;
+    font-size: 10px;
+  }
+  .graph {
+    position: relative;
+    height: 450px;
+  }
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  button {
+    color: inherit;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+  }
+  button:disabled {
+    cursor: default;
+  }
+  .node {
+    position: absolute;
+    padding: 0;
+    text-align: left;
+    font: inherit;
+    transform: translate(-50%, -50%);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stage-label {
+    display: block;
+    margin: 0 0 12px;
+    color: #b6b9b4;
+    font:
+      14px/1.3 'Fira Mono',
+      monospace;
+  }
+  .node[aria-pressed='true'] .stage-label {
+    color: #d0ba87;
+  }
+  .node[aria-pressed='true'] .stage-label::before {
+    content: '●';
+    font-size: 6px;
+    vertical-align: 3px;
+    margin-right: 7px;
+  }
+  .node:focus-visible {
+    outline: 1px solid #d0ba87;
+    outline-offset: 10px;
+  }
+  .material {
+    display: block;
+    height: 150px;
+    transition: transform 0.2s ease;
+  }
+  .material img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .node:hover .material,
+  .node[aria-pressed='true'] .material {
+    transform: translateY(-3px);
+  }
+  .node-plan {
+    left: 13%;
+    top: 105px;
+    width: min(23%, 230px);
+  }
+  .node-research {
+    left: 49%;
+    top: 105px;
+    width: min(23%, 230px);
+  }
+  .node-scrape {
+    left: 87%;
+    top: 105px;
+    width: min(23%, 230px);
+  }
+  .node-write {
+    left: 65%;
+    top: 334px;
+    width: min(23%, 230px);
+  }
+  .node-review {
+    left: 27%;
+    top: 334px;
+    width: min(23%, 230px);
+  }
+  .retry {
+    position: absolute;
+    left: 30%;
+    top: 181px;
+    color: #b6ab8c;
+    font:
+      italic 13px/1.3 Georgia,
+      serif;
+  }
+  .retry span {
+    color: #8e978a;
+    font:
+      9px/1.5 'Fira Mono',
+      monospace;
+  }
+  .finished {
+    position: absolute;
+    left: 0;
+    top: 325px;
+    color: #9da694;
+    font:
+      italic 14px/1.3 Georgia,
+      serif;
+  }
+  .stage-caption {
+    min-height: 56px;
+    max-width: 690px;
+    margin: 12px auto 0;
+    text-align: center;
+  }
+  .stage-caption p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #b6bcb2;
+  }
+  .stage-caption p > span {
+    color: #d0ba87;
+  }
+  .graph-description {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  [data-connections='unavailable'] .graph-description {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 12px 0;
+    clip-path: none;
+    white-space: normal;
+    font-size: 11px;
+  }
+  .examples {
+    max-width: 560px;
+    margin: 48px auto 0;
+  }
+  .example-controls {
+    display: flex;
+    gap: 24px;
+    margin: 14px 0 8px;
+    font-size: 13px;
+  }
+  .example-controls button {
+    padding: 10px 0;
+    border-bottom: 1px solid transparent;
+  }
+  .example-controls [aria-pressed='true'] {
+    border-bottom-color: var(--text);
+  }
+  .example-context,
+  .review-note {
+    font-size: 14px;
+    color: #b5bab5;
+  }
+  .example-context {
+    margin: 0 0 20px;
+  }
+  .review-note {
+    margin: 24px 0 0;
+    color: #969d96;
+  }
+  figure {
+    margin: 0;
+  }
+  figure + figure {
+    margin-top: 28px;
+  }
+  .screenshot-link {
+    display: block;
+    position: relative;
+    text-decoration: none;
+  }
+  .screenshot-link img {
+    width: 100%;
+    height: auto;
+    border: 1px solid #3d423e;
+  }
+  .expand-label {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    background: #181a1be8;
+    border: 1px solid #555b55;
+    padding: 6px 10px;
+    font-size: 10px;
+  }
+  figcaption {
+    margin-top: 12px;
+    color: #969d96;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  dialog {
+    width: min(92vw, 760px);
+    max-height: 94dvh;
+    padding: 16px;
+    border: 1px solid #555b55;
+    background: var(--background);
+    color: var(--text);
+  }
+  dialog::backdrop {
+    background: #000b;
+  }
+  dialog form {
+    position: sticky;
+    top: 0;
+    display: flex;
+    justify-content: flex-end;
+    background: var(--background);
+    padding-bottom: 10px;
+  }
+  dialog button {
+    min-height: 44px;
+    padding: 8px;
+    font-size: 13px;
+  }
+  dialog img {
+    width: 100%;
+    height: auto;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .material {
+      transition: none;
+    }
+  }
+  .no-script-nodes {
+    padding-left: 20px;
+    font-size: 13px;
+  }
+  @media (max-width: 760px) {
+    .agentic-page {
+      padding: 28px 22px 48px;
+    }
+    header {
+      margin: 34px 0 36px;
+    }
+    h1 {
+      font-size: clamp(31px, 7vw, 45px);
+      margin-bottom: 16px;
+    }
+    .intro {
+      font-size: 24px;
+      line-height: 1.4;
+    }
+    h2 {
+      font-size: 21px;
+    }
+    .workflow-heading {
+      display: block;
+      margin-bottom: 14px;
+    }
+    .instruction {
+      display: block;
+      margin-top: 6px;
+    }
+    .graph {
+      height: 480px;
+      max-width: 420px;
+      margin: auto;
+    }
+    .stage-label {
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+    .material {
+      height: 105px;
+    }
+    .node {
+      width: 38%;
+    }
+    .node-plan {
+      left: 23%;
+      top: 88px;
+    }
+    .node-research {
+      left: 74%;
+      top: 88px;
+    }
+    .node-scrape {
+      left: 74%;
+      top: 246px;
+    }
+    .node-write {
+      left: 23%;
+      top: 246px;
+    }
+    .node-review {
+      left: 23%;
+      top: 406px;
+    }
+    .retry {
+      left: 58%;
+      top: 343px;
+      font-size: 12px;
+    }
+    .retry span {
+      font-size: 8px;
+    }
+    .finished {
+      left: 63%;
+      top: 397px;
+      font-size: 12px;
+    }
+    .stage-caption {
+      min-height: 72px;
+      margin-top: 14px;
+      text-align: left;
+    }
+    .stage-caption p {
+      font-size: 13px;
+    }
+    .examples {
+      margin-top: 30px;
+    }
+    .example-controls {
+      margin: 12px 0;
+    }
+    .example-context {
+      font-size: 14px;
+      margin: 10px 0;
+    }
+    .review-note {
+      margin-top: 18px;
+      font-size: 13px;
+    }
+    .example-figures {
+      max-width: 365px;
+      width: 100%;
+      margin: auto;
+    }
+    nav {
+      font-size: 12px;
+    }
+  }
+</style>

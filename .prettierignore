@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.astro/
+.audit/
+output/
+public/
+src/data/
+package-lock.json
+.playwright-mcp/
+.agents/
+.codex/
+.aws/
+trash/
+temp/
+tmp/

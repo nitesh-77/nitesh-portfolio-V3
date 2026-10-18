@@ -1,0 +1,86 @@
+---
+kind: project
+presentation: visual
+title: llm-layer-distillation
+description: 'Replacing a Qwen 2.5 attention layer with a Hyena convolution. An experiment in model architecture.'
+order: 1
+media:
+  kind: video
+  src: /media/llm-layer-distillation-mi300x.mp4
+  poster: /media/llm-layer-distillation-mi300x-poster.webp
+  alt: 'Animated MI300X training plot showing minibatch MSE, its 50-step rolling mean, validation MSE, and the selected checkpoint at step 3,200, on a logarithmic scale'
+---
+
+import ProjectStory from '../../components/ProjectStory.astro';
+import DistillationTrainingCanvas from '../../components/DistillationTrainingCanvas.astro';
+import DistillationExperiment from '../../components/DistillationExperiment.astro';
+import ActivationComparison from '../../components/ActivationComparison.astro';
+import { href } from '../../lib/href';
+
+<ProjectStory
+  eyebrow="Qwen2.5-7B / one attention module"
+  title="llm-layer-distillation"
+  description="I trained a Hyena convolution to copy one attention module in Qwen, then swapped it into the model to see what changed."
+  repository="https://github.com/nitesh-77/llm-layer-distillation"
+  weightsUrl="https://huggingface.co/swoord111/qwen2-5-7b-hyena-attn-replacement-block-2"
+>
+  <DistillationExperiment />
+
+<section class="story-section" aria-labelledby="learning">
+  <h2 id="learning">How I trained it</h2>
+  <p>
+    I first saved the inputs and outputs of Qwen’s attention module. Qwen stayed frozen. Hyena
+    learned from those pairs, with mean squared error measuring how far its output was from Qwen’s.
+  </p>
+  <DistillationTrainingCanvas />
+  <p class="experiment-context">
+    I trained on an <strong class="gpu-name">AMD Instinct MI300X</strong>, with Qwen loaded in BF16.
+    The run used 512 Wikipedia sequences: 358 for training, 77 for validation, and 77 for testing.
+  </p>
+</section>
+
+<section class="story-section" aria-labelledby="outputs">
+  <h2 id="outputs">What did it learn?</h2>
+  <p>
+    Here are two saved test examples. Pick an example, then click a cell or move the controls to
+    compare the same value in both outputs. The difference view shows where they disagree.
+  </p>
+  <ActivationComparison />
+  <p class="experiment-context">
+    Both examples are from the test split. These saved outputs use the original checkpoint, before
+    tuning.
+  </p>
+</section>
+
+  <section class="story-section" aria-labelledby="checking">
+    <details>
+    <summary id="checking">Full replacement evaluation</summary>
+    <p>Matching attention outputs is only part of the test. I put Hyena back into Qwen and checked next-token loss on the same 77 test sequences. Lower loss means the model assigns more probability to the correct next token.</p>
+    <figure>
+      <a class="figure-link" href={href('/media/llm-layer-distillation/tuning-comparison/qwen_replacement_gap.svg')} aria-label="Expand the measured replacement loss plot">
+        <img src={href('/media/llm-layer-distillation/tuning-comparison/qwen_replacement_gap.svg')} width="760" height="250" alt="Added next-token loss over Qwen: original Hyena +0.001409; tuned Hyena +0.000785." loading="lazy" />
+      </a>
+      <figcaption>The original replacement added 0.001409 to Qwen's loss. After tuning, that fell to 0.000785. Both values are above unmodified Qwen.</figcaption>
+    </figure>
+    <p>Another 400 training steps reduced the added loss by 44.31%. The tuned model's loss was 2.055492, compared with 2.054707 for unmodified Qwen. This check covered 12,521 next-token predictions, with the cache disabled.</p>
+    </details>
+    <details>
+      <summary>Training and tuning curves</summary>
+      <figure>
+        <a class="figure-link" href={href('/media/llm-layer-distillation/mi300x-bf16-512/loss_curve.png')}><img src={href('/media/llm-layer-distillation/mi300x-bf16-512/loss_curve.png')} width="1280" height="720" alt="Original training and validation error over 3,200 optimizer steps." loading="lazy" /></a>
+        <figcaption>Validation error selected the checkpoint at step 3,200.</figcaption>
+      </figure>
+      <figure>
+        <a class="figure-link" href={href('/media/llm-layer-distillation/tuning-comparison/validation_curve.svg')}><img src={href('/media/llm-layer-distillation/tuning-comparison/validation_curve.svg')} width="900" height="500" alt="Validation error during three tuning attempts at different learning rates." loading="lazy" /></a>
+        <figcaption>All three attempts started from the same weights. Validation picked the run at 0.03× the original learning rates. Its test MSE was 4.79% lower.</figcaption>
+      </figure>
+    </details>
+    <details>
+      <summary>Activation baselines</summary>
+      <figure>
+        <a class="figure-link" href={href('/media/llm-layer-distillation/mi300x-bf16-512/baseline_metrics.png')}><img src={href('/media/llm-layer-distillation/mi300x-bf16-512/baseline_metrics.png')} width="1120" height="720" alt="Original Hyena checkpoint beats zero-output and training-mean activation baselines." loading="lazy" /></a>
+        <figcaption>Original checkpoint test MSE: Hyena 0.004062, zero output 0.008281, training mean 0.007078.</figcaption>
+      </figure>
+    </details>
+  </section>
+</ProjectStory>

@@ -6,7 +6,12 @@ const assetPath = z.string().regex(/^\/(?!\/)/, 'Use a root-relative public asse
 
 export const mediaSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('placeholder') }),
-  z.object({ kind: z.literal('image'), src: assetPath, alt: z.string().min(1) }),
+  z.object({
+    kind: z.literal('image'),
+    src: assetPath,
+    alt: z.string().min(1),
+    fit: z.enum(['cover', 'contain']).optional(),
+  }),
   z.object({
     kind: z.literal('video'),
     src: assetPath,
@@ -19,6 +24,7 @@ const work = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/work' }),
   schema: z.object({
     kind: z.enum(['project', 'oss']),
+    presentation: z.enum(['article', 'visual']).default('article'),
     title: z.string().min(1),
     description: z.string().min(1),
     order: z.number().int(),

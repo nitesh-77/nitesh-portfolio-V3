@@ -1,0 +1,212 @@
+---
+import { href } from '../lib/href';
+
+type Screenshot = {
+  id: 'notepad' | 'nvimpad';
+  src: string;
+  width: number;
+  height: number;
+  alt: string;
+  label: string;
+  caption: string;
+};
+
+const screenshots: Screenshot[] = [
+  {
+    id: 'notepad',
+    src: '/media/nvimpad/windows-notepad-user.png',
+    width: 1440,
+    height: 1080,
+    alt: 'Windows Notepad in dark mode with a short note.',
+    label: 'What I used',
+    caption: 'Windows Notepad.',
+  },
+  {
+    id: 'nvimpad',
+    src: '/media/nvimpad/nvimpad.webp',
+    width: 944,
+    height: 472,
+    alt: 'NvimPad showing a note and multiple tabs in its dark, Neovim-inspired interface.',
+    label: 'What I made',
+    caption:
+      'A Neovim-inspired scratchpad. Multiple tabs, automatic saving, and notes that stay when I close it.',
+  },
+];
+---
+
+<article class="nvimpad-page">
+  <nav aria-label="Project navigation">
+    <a href={href('/')}>
+      <span aria-hidden="true">← </span>Back home
+    </a>
+    <a
+      class="github-link"
+      href="https://github.com/nitesh-77/NvimPad"
+      aria-label="View NvimPad on GitHub"
+      title="Project code on GitHub"
+    >
+      <img src={href('/media/nvimpad/github.png')} width="36" height="36" alt="" />
+    </a>
+  </nav>
+
+  <header>
+    <h1>NvimPad</h1>
+    <p class="intro">
+      I used Windows Notepad constantly while browsing. Somewhere to paste text, jot down a thought,
+      or leave something for later. When I switched to Arch and Hyprland, I missed that habit, so I
+      made NvimPad.
+    </p>
+  </header>
+
+  <section class="screenshots" aria-label="Windows Notepad and NvimPad">
+    {screenshots.map((screenshot) => (
+      <figure>
+        <h2>{screenshot.label}</h2>
+        <div class="screenshot-frame">
+          <img
+            class={screenshot.id}
+            src={href(screenshot.src)}
+            width={screenshot.width}
+            height={screenshot.height}
+            alt={screenshot.alt}
+            decoding="async"
+          />
+        </div>
+        <figcaption>
+          <p>{screenshot.caption}</p>
+        </figcaption>
+      </figure>
+    ))}
+  </section>
+</article>
+
+<style>
+  .nvimpad-page {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 48px 28px 64px;
+    font:
+      17px/1.6 'Fira Mono',
+      monospace;
+  }
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+  }
+  nav a {
+    padding: 8px 0;
+    text-decoration: none;
+  }
+  nav a:hover {
+    text-decoration: underline;
+  }
+  .github-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+  .github-link img {
+    display: block;
+    width: 36px;
+    height: 36px;
+  }
+  header {
+    margin: 36px 0 40px;
+  }
+  h1 {
+    margin: 0 0 20px;
+    font-family: var(--sans);
+    font-size: 52.8px;
+    line-height: 1.1;
+    letter-spacing: -0.035em;
+  }
+  .intro {
+    max-width: 960px;
+    margin: 0;
+    color: var(--muted);
+    font:
+      italic 26px/1.4 Georgia,
+      serif;
+    text-align: left;
+    text-wrap: pretty;
+  }
+  .screenshots {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px;
+    align-items: start;
+  }
+  figure {
+    min-width: 0;
+    margin: 0;
+  }
+  h2 {
+    margin: 0 0 16px;
+    font: 500 21px/1.4 var(--sans);
+    letter-spacing: -0.015em;
+  }
+  .screenshot-frame {
+    position: relative;
+    aspect-ratio: 2 / 1;
+    overflow: hidden;
+    border: 1px solid #3d423e;
+  }
+  .screenshot-frame img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+  }
+  .screenshot-frame .notepad {
+    position: absolute;
+    left: -5.0691%;
+    top: -18.7404%;
+    width: 110.5991%;
+    max-width: none;
+    height: auto;
+  }
+  figcaption {
+    margin-top: 14px;
+    color: #b5bab5;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  figcaption p {
+    margin: 0;
+  }
+  @media (max-width: 760px) {
+    .nvimpad-page {
+      padding: 28px 22px 48px;
+    }
+    nav {
+      font-size: 12px;
+    }
+    header {
+      margin: 28px 0 32px;
+    }
+    h1 {
+      margin-bottom: 16px;
+      font-size: clamp(31px, 7vw, 45px);
+    }
+    .intro {
+      font-size: 24px;
+      line-height: 1.4;
+    }
+    .screenshots {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 30px;
+    }
+    h2 {
+      margin-bottom: 12px;
+    }
+    figcaption {
+      margin-top: 10px;
+    }
+  }
+</style>

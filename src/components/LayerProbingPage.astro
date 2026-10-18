@@ -1,0 +1,694 @@
+---
+import { href } from '../lib/href';
+import LayerProbingTrainingCanvas from './LayerProbingTrainingCanvas.astro';
+---
+
+<article class="layer-probing-page" data-layer-probing>
+  <nav aria-label="Project navigation">
+    <a href={href('/')}>
+      <span aria-hidden="true">← </span>Back home
+    </a>
+    <a
+      class="github-link"
+      href="https://github.com/nitesh-77/Layer-Probing"
+      aria-label="View project code on GitHub"
+      title="Project code on GitHub"
+    >
+      <img src={href('/media/brands/github.svg')} width="36" height="36" alt="" />
+      <span>GitHub</span>
+    </a>
+  </nav>
+  <header>
+    <h1>Layer-Probing</h1>
+    <p class="intro">
+      I studied how information evolves in the residual streams of DeepSeek and Qwen, using trained
+      probes to measure how readable their final predictions become.
+    </p>
+    <p class="model-context">DeepSeek-R1-Distill-Qwen-7B / Qwen2-7B-Instruct</p>
+  </header>
+  <section class="experiment" aria-label="Interactive residual stream model">
+    <div class="experiment-intro">
+      <h2>Reading the residual stream</h2>
+      <p>
+        The residual stream is the hidden state carried between layers. Each block updates it. A
+        trained probe measures how readable the model's final prediction is from that state.
+      </p>
+    </div>
+    <div class="toolbar">
+      <div class="models" role="group" aria-label="Choose model">
+        <button data-model="deepseek" aria-pressed="true">
+          DeepSeek
+        </button>
+        <button data-model="qwen" aria-pressed="false">
+          Qwen
+        </button>
+      </div>
+      <span class="frozen">28 blocks · frozen model</span>
+    </div>
+    <div class="stage">
+      <canvas
+        id="residual-scene"
+        aria-label="Schematic 3D model. Drag to rotate; click a block or use the layer slider to choose its residual output."
+      ></canvas>
+      <span class="annotation" data-anchor="input">
+        Prefix
+      </span>
+      <span class="annotation" data-anchor="teacher">
+        Full model prediction
+      </span>
+      <span class="annotation stream-label" data-anchor="stream">
+        Residual stream
+      </span>
+      <span class="annotation state-label" data-anchor="state">
+        Layer <span data-state-layer>22</span>
+      </span>
+      <span class="annotation" data-anchor="norm">
+        Frozen RMS norm
+      </span>
+      <span class="annotation probe-label" data-anchor="probe">
+        <strong>Linear probe · trainable</strong>
+      </span>
+      <p class="fallback" hidden>
+        3D is unavailable in this browser. The layer control and measured results below still work.
+      </p>
+      <noscript>
+        <p class="no-js">
+          Enable JavaScript to explore the 3D model. Training and results below remain available.
+        </p>
+      </noscript>
+      <div class="scene-caption">
+        <button id="reset-view">Reset view ↗</button>
+      </div>
+    </div>
+    <div class="inspection">
+      <label for="layer">
+        Residual after layer <output id="layer-number">22</output>
+      </label>
+      <input id="layer" type="range" min="1" max="28" value="22" />
+      <div class="range-ends">
+        <span>1 · first</span>
+        <span>28 · last</span>
+      </div>
+    </div>
+    <p class="explanation">The probe bypasses later layers; the full model supplies the target.</p>
+  </section>
+  <section class="training-section" aria-labelledby="probe-training">
+    <div class="training-copy">
+      <h2 id="probe-training">How I trained the probes</h2>
+      <p>
+        A forward hook captured one layer’s residual output. On GSM8K reference-solution prefixes, a
+        separate linear probe per layer learned the full model’s next-token distribution. Only probe
+        weights changed.
+      </p>
+    </div>
+    <LayerProbingTrainingCanvas />
+    <p class="training-context">
+      Trained on an <strong>AMD Instinct MI300X</strong>, with 256 training questions and 64
+      held-out questions per model.
+    </p>
+  </section>
+  <section class="story-section probe-results-section" aria-label="Results and experiment details">
+    <details>
+      <summary>Prediction readability across layers</summary>
+      <p>
+        Both models showed their largest increase in agreement between layers 22 and 23. This
+        measures how closely a trained probe matches its own model, not where reasoning begins.
+      </p>
+      <figure>
+        <a
+          class="figure-link"
+          href={href('/media/layer-probing/deepseek_qwen_probe_comparison.png')}
+        >
+          <img
+            src={href('/media/layer-probing/deepseek_qwen_probe_comparison.png')}
+            alt="Original paired comparison of teacher-to-probe KL, excess cross entropy, top-token agreement, and reference-token accuracy for all 28 layers."
+            loading="lazy"
+          />
+        </a>
+        <figcaption>
+          The saved plots use code indices 0–27. Their jump from index 21 to 22 is layer 22 to 23 in
+          the diagram above. Both models used the same questions. Shading resamples held-out
+          questions. KL is teacher to probe, despite the original chart's reversed wording.
+        </figcaption>
+      </figure>
+    </details>
+    <details>
+      <summary>Residual magnitude and direction changes</summary>
+      <figure>
+        <a
+          class="figure-link"
+          href={href('/media/layer-probing/deepseek_qwen_residual_updates.png')}
+        >
+          <img
+            src={href('/media/layer-probing/deepseek_qwen_residual_updates.png')}
+            alt="Measured median relative residual updates and direction changes for DeepSeek and Qwen at the final prompt token."
+            loading="lazy"
+          />
+        </a>
+        <figcaption>
+          Activation size and direction changes at the final formatted prompt token. The plot omits
+          the large embedding-to-first-layer transition. These changes do not themselves measure
+          reasoning quality.
+        </figcaption>
+      </figure>
+    </details>
+    <details>
+      <summary>Seed checks and experiment details</summary>
+      <figure>
+        <a class="figure-link" href={href('/media/layer-probing/deepseek_qwen_seed_stability.png')}>
+          <img
+            src={href('/media/layer-probing/deepseek_qwen_seed_stability.png')}
+            alt="Three-seed comparison showing each model's largest adjacent agreement increase from code index 21 to 22."
+            loading="lazy"
+          />
+        </a>
+        <figcaption>
+          The same jump appeared across all six runs. Lines show seed means; shading shows the
+          observed range across three seeds.
+        </figcaption>
+      </figure>
+      <figure>
+        <a class="figure-link" href={href('/media/layer-probing/seed_comparison.png')}>
+          <img
+            src={href('/media/layer-probing/seed_comparison.png')}
+            alt="DeepSeek's full-probe seed range and rank-128 probe, with the shared late-layer transition and lower agreement of the smaller readout."
+            loading="lazy"
+          />
+        </a>
+        <figcaption>
+          A rank-128 probe reduced parameters from 545 million to 20 million. It retained the jump
+          but matched late-layer predictions less closely. This control used one seed and the same
+          examples.
+        </figcaption>
+      </figure>
+      <p>
+        The frozen models ran in BF16. I trained independent FP32 affine probes for one epoch with
+        learning rate 0.0005, accumulation over four examples, and a 512-token limit. Evaluation
+        covered 7,676 supplied solution tokens. Each selected activation passed through the model's
+        frozen final RMS normalization.
+      </p>
+      <p>
+        The objective was KL(teacher || probe). A large readout trained on a small sample reflects
+        fitting and optimization as well as the representation. Even the last-layer probe must learn
+        its weights.
+      </p>
+      <p>
+        <a href={href('/media/layer-probing/evidence.json')}>
+          Saved measurements, model revisions, and source-file hashes.
+        </a>
+      </p>
+    </details>
+  </section>
+  <footer>Geometry shows the method, not the shape or motion of measured activations.</footer>
+</article>
+<script>
+  import data from '../data/layer-probing.json';
+  import { createResidualScene } from '../lib/layer-probing-scene';
+
+  const canvas = document.querySelector<HTMLCanvasElement>('#residual-scene');
+  const slider = document.querySelector<HTMLInputElement>('#layer');
+  const layerOutput = document.querySelector('#layer-number');
+  let model = data.models[0];
+  let selectedLayer = 22;
+  let scene: ReturnType<typeof createResidualScene> | undefined;
+
+  function update() {
+    if (!model || !slider) return;
+    slider.value = String(selectedLayer);
+    if (layerOutput) layerOutput.textContent = String(selectedLayer);
+    const stateLayer = document.querySelector('[data-state-layer]');
+    if (stateLayer) stateLayer.textContent = String(selectedLayer);
+    canvas?.setAttribute(
+      'aria-label',
+      `${model.name}. A probe reads the residual after layer ${selectedLayer} of 28. Drag to rotate, or click a block to select its output.`,
+    );
+    scene?.select(selectedLayer);
+  }
+
+  if (canvas && slider) {
+    try {
+      scene = createResidualScene(canvas, (layer) => {
+        selectedLayer = layer;
+        update();
+      });
+    } catch {
+      canvas.hidden = true;
+      document.querySelectorAll<HTMLElement>('.annotation').forEach((label) => {
+        label.hidden = true;
+      });
+      const fallback = document.querySelector<HTMLElement>('.fallback');
+      if (fallback) fallback.hidden = false;
+    }
+    slider.addEventListener('input', () => {
+      selectedLayer = Number(slider.value);
+      update();
+    });
+    document.querySelectorAll<HTMLButtonElement>('[data-model]').forEach((button) =>
+      button.addEventListener('click', () => {
+        const next = data.models.find((entry) => entry.id === button.dataset.model);
+        if (!next) return;
+        model = next;
+        document
+          .querySelectorAll('[data-model]')
+          .forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+        update();
+      }),
+    );
+    document.querySelector('#reset-view')?.addEventListener('click', () => scene?.reset());
+    window.addEventListener(
+      'pagehide',
+      () => {
+        scene?.dispose();
+      },
+      { once: true },
+    );
+    update();
+  }
+</script>
+<style>
+  :global(html:has([data-layer-probing])) {
+    color-scheme: dark;
+    --background: #181a1b;
+    --text: #e8e6e3;
+    --muted: #d4d2ce;
+    --active: #7cceef;
+    --probe: #f1a28d;
+    --secondary: #d4d2ce;
+    --rule: #505550;
+    --comparison: #6a7e9f;
+    --label-halo: #090b0f;
+    background: var(--background);
+    color: var(--text);
+  }
+  .stage,
+  :global([data-training-figure]) {
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    --text: #eeeae3;
+    --secondary: #a8abb0;
+    --active: #7cceef;
+    --probe: #f1a28d;
+  }
+  .layer-probing-page {
+    max-width: 1160px;
+    margin: auto;
+    padding: 30px 38px 45px;
+    color: var(--text);
+    font-family: 'Fira Mono', monospace;
+    font-size: 17px;
+    line-height: 1.65;
+  }
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    font-size: 14px;
+    color: var(--secondary);
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+  button {
+    background: none;
+    color: var(--secondary);
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+    padding: 11px 0;
+  }
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--active);
+    outline-offset: 5px;
+  }
+  .github-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  .github-link span {
+    color: #e4bb7a;
+    font-weight: 700;
+  }
+  .github-link:focus-visible {
+    outline-color: #e4bb7a;
+  }
+  .github-link img {
+    display: block;
+    width: 36px;
+    height: 36px;
+  }
+  header {
+    max-width: 1000px;
+    margin: 76px auto 55px;
+  }
+  h1 {
+    font: 700 52.8px/1 var(--sans);
+    letter-spacing: normal;
+    margin: 0 0 22px;
+  }
+  header p.intro {
+    max-width: 760px;
+    margin: 0;
+    color: var(--secondary);
+    font:
+      italic 28.8px/1.3 Georgia,
+      Times,
+      serif;
+    text-align: left;
+    text-wrap: pretty;
+  }
+  .model-context {
+    font-size: 13px;
+    color: var(--secondary);
+    margin: 24px 0 0;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+  .experiment-intro {
+    max-width: 800px;
+    margin: 0 auto 35px;
+  }
+  .experiment-intro h2 {
+    font: 700 36px/1.15 var(--sans);
+    letter-spacing: normal;
+    margin: 0 0 18px;
+  }
+  .experiment-intro p {
+    font-size: 17px;
+    line-height: 1.65;
+    margin: 0;
+    text-align: left;
+    color: var(--secondary);
+  }
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: 14px;
+  }
+  .models {
+    display: flex;
+    gap: 26px;
+  }
+  .models button {
+    font-size: 15px;
+  }
+  .models button[aria-pressed='true'] {
+    color: var(--text);
+    border-bottom: 1px solid var(--text);
+  }
+  .frozen {
+    font-size: 13px;
+    color: var(--secondary);
+  }
+  .stage {
+    position: relative;
+    height: 450px;
+  }
+  #residual-scene {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: pan-y;
+    cursor: grab;
+  }
+  #residual-scene:active {
+    cursor: grabbing;
+  }
+  .annotation {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    font: 14px/1.6 var(--sans);
+    color: var(--text);
+    text-align: center;
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+    text-shadow:
+      0 0 5px var(--label-halo),
+      0 0 10px var(--label-halo);
+  }
+  .probe-label strong {
+    color: var(--probe);
+    font-weight: 600;
+  }
+  .scene-caption {
+    position: absolute;
+    bottom: 8px;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-size: 12px;
+    color: var(--secondary);
+  }
+  .scene-caption i {
+    display: inline-block;
+    height: 2px;
+    width: 20px;
+    background: var(--active);
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  .scene-caption small {
+    font-size: 11px;
+    margin-left: 8px;
+  }
+  .inspection {
+    width: min(440px, 100%);
+    margin: 8px auto 0;
+    padding: 10px 0 0;
+    font:
+      14px/1.6 'Fira Mono',
+      monospace;
+  }
+  .inspection > label {
+    display: block;
+    text-align: center;
+  }
+  #layer-number {
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  input {
+    display: block;
+    width: 100%;
+    margin: 15px 0 10px;
+    accent-color: #d4d9e1;
+    height: 16px;
+    cursor: ew-resize;
+  }
+  .range-ends {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--secondary);
+  }
+  .explanation {
+    font-size: 12px;
+    line-height: 1.65;
+    color: var(--secondary);
+    margin: 20px auto 0;
+    text-align: center;
+  }
+  .state-label,
+  .stream-label {
+    color: var(--active);
+  }
+  .annotation small {
+    font-size: 11px;
+    color: var(--secondary);
+  }
+  .comparison-label {
+    color: var(--text);
+  }
+  .training-section {
+    margin: 70px 0 45px;
+  }
+  .training-copy,
+  .training-context {
+    max-width: 800px;
+    margin-inline: auto;
+  }
+  .training-copy h2 {
+    font: 700 36px/1.15 var(--sans);
+    letter-spacing: normal;
+    margin: 0 0 20px;
+  }
+  .training-copy p,
+  .training-context {
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--secondary);
+  }
+  .training-context strong {
+    color: #e4bb7a;
+    font-weight: 700;
+  }
+  .probe-results-section {
+    max-width: 800px;
+    margin: 45px auto 65px;
+  }
+  details {
+    margin: 18px 0;
+  }
+  summary {
+    cursor: pointer;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 17px;
+  }
+  summary:hover,
+  summary:focus-visible {
+    color: #e4bb7a;
+  }
+  summary:focus-visible {
+    outline-color: #e4bb7a;
+  }
+  details > p {
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--secondary);
+  }
+  figure {
+    margin: 24px 0 30px;
+  }
+  figure img {
+    width: 100%;
+    height: auto;
+  }
+  figcaption {
+    font-size: 13px;
+    line-height: 1.75;
+    color: var(--secondary);
+    margin-top: 12px;
+  }
+  details a {
+    color: var(--text);
+    text-decoration: underline;
+  }
+  details p a {
+    color: #e4bb7a;
+    font-weight: 700;
+  }
+  .eyebrow {
+    font-size: 13px;
+    color: var(--active);
+  }
+  .method h2 {
+    font: 500 30px/1.25 var(--sans);
+    letter-spacing: -0.025em;
+    margin: 17px 0;
+  }
+  .method > p:not(.eyebrow) {
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--secondary);
+  }
+  .method a {
+    display: inline-block;
+    font-size: 15px;
+    color: var(--active);
+    margin-top: 12px;
+  }
+  footer {
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--secondary);
+    border-top: 1px solid var(--rule);
+    padding-top: 20px;
+  }
+  .fallback,
+  .no-js {
+    position: absolute;
+    inset: 40% 10% auto;
+    font-size: 16px;
+    line-height: 1.8;
+  }
+  .fallback[hidden],
+  canvas[hidden],
+  .annotation[hidden] {
+    display: none;
+  }
+  @media (max-width: 700px) {
+    .layer-probing-page {
+      padding: 22px 20px;
+    }
+    nav {
+      font-size: 12px;
+    }
+    header {
+      margin: 48px auto 38px;
+    }
+    h1 {
+      font-size: 38px;
+    }
+    header p.intro {
+      font-size: 23px;
+    }
+    .model-context {
+      font-size: 12px;
+    }
+    .experiment-intro h2 {
+      font-size: 28px;
+    }
+    .experiment-intro p {
+      font-size: 16px;
+    }
+    .frozen {
+      font-size: 11px;
+    }
+    .models {
+      gap: 16px;
+    }
+    .models button {
+      font-size: 14px;
+    }
+    .stage {
+      height: 350px;
+    }
+    .annotation {
+      font-size: 11px;
+    }
+    .inspection {
+      font-size: 13px;
+    }
+    .range-ends {
+      font-size: 10px;
+    }
+    .training-section {
+      margin-top: 50px;
+    }
+    .training-copy h2 {
+      font-size: 28px;
+    }
+    .training-copy p,
+    .training-context {
+      font-size: 16px;
+    }
+    .method h2 {
+      font-size: 26px;
+    }
+    .scene-caption {
+      font-size: 11px;
+    }
+    .scene-caption button {
+      font-size: 12px;
+    }
+  }
+</style>

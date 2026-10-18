@@ -1,0 +1,517 @@
+---
+import { href } from '../lib/href';
+
+type Example = {
+  id: 'calendar' | 'task';
+  question: string;
+  image: string;
+  alt: string;
+  call: { name: string; arguments: string[] };
+  result: string[];
+};
+const examples: Example[] = [
+  {
+    id: 'calendar',
+    question: "What's on my calendar?",
+    image: '/media/rag-voice-assistant/architecture/calendar-v2.webp',
+    alt: 'Cut-paper microphone, transcript, notebook, reply, and speaker follow the voice pipeline. A calendar sits in front of contacts and tasks. The LLM calls get_calendar_events and reads a 9 a.m. team meeting in Conference Room A before speaking the answer.',
+    call: { name: 'get_calendar_events', arguments: ['start_date,', 'end_date'] },
+    result: ['09:00', 'Team meeting'],
+  },
+  {
+    id: 'task',
+    question: 'Add a task',
+    image: '/media/rag-voice-assistant/architecture/task-v2.webp',
+    alt: 'Cut-paper microphone, transcript, notebook, reply, and speaker follow the voice pipeline. A task checklist sits in front of a calendar and contacts. The LLM calls add_task with a task, due date, and priority, then receives a success confirmation and speaks back.',
+    call: { name: 'add_task', arguments: ['task, due_date,', 'priority'] },
+    result: ['status: success', 'Task added'],
+  },
+];
+const stages = [
+  { id: 'input', label: 'Voice input', provider: '' },
+  { id: 'stt', label: 'Speech to text', provider: 'Groq · Whisper' },
+  { id: 'llm', label: 'Language model', provider: 'Groq' },
+  { id: 'tools', label: 'Tools', provider: '' },
+  { id: 'tts', label: 'Text to speech', provider: 'ElevenLabs' },
+  { id: 'output', label: 'Voice output', provider: '' },
+];
+---
+
+<article class="voice-page" data-voice-page>
+  <nav aria-label="Project navigation">
+    <a href={href('/')}>
+      <span aria-hidden="true">← </span>Back home
+    </a>
+    <a
+      class="github-link"
+      href="https://github.com/nitesh-77/RAG-Voice-Assistant-"
+      aria-label="View Voice Assistant with Tool Calling on GitHub"
+      title="Project code on GitHub"
+    >
+      <img src={href('/media/rag-voice-assistant/github.png')} width="36" height="36" alt="" />
+    </a>
+  </nav>
+  <header>
+    <h1>Voice Assistant with Tool Calling</h1>
+    <p class="intro">
+      I built a voice assistant that turns speech into text, uses tools, and speaks back.
+    </p>
+  </header>
+
+  <section aria-labelledby="exchange-title">
+    <div class="exchange-heading">
+      <h2 id="exchange-title">Find something. Do something.</h2>
+      <span class="example-label">Illustrated examples</span>
+    </div>
+    <div
+      class="question-choices"
+      role="group"
+      aria-label="Choose an example"
+      data-question-controls
+      hidden
+    >
+      {examples.map((example) => (
+        <button
+          type="button"
+          data-example={example.id}
+          aria-controls={`voice-case-${example.id}`}
+          aria-pressed={example.id === 'calendar' ? 'true' : 'false'}
+        >
+          {example.question}
+        </button>
+      ))}
+    </div>
+
+    {examples.map((example) => (
+      <figure
+        id={`voice-case-${example.id}`}
+        class="case-panel"
+        data-case-panel={example.id}
+        hidden={example.id !== 'calendar'}
+      >
+        <div class="architecture-art">
+          <img
+            src={href(example.image)}
+            width="1586"
+            height="992"
+            alt={example.alt}
+            decoding="async"
+          />
+          <div class="diagram-labels">
+            {stages.map((stage) => (
+              <div class={`stage-label stage-${stage.id}`}>
+                <span>{stage.label}</span>
+                {stage.provider && <small>{stage.provider}</small>}
+              </div>
+            ))}
+          </div>
+          <div class="tool-exchange" aria-label="Tool call and returned result">
+            <div class="tool-call">
+              <span class="exchange-label">Tool call</span>
+              <code>
+                <span>{example.call.name}</span>
+                <span>
+                  (
+                  {example.call.arguments.map((argument, index) => (
+                    <>
+                      <span>{argument}</span>
+                      {index < example.call.arguments.length - 1 && <br />}
+                    </>
+                  ))}
+                  )
+                </span>
+              </code>
+            </div>
+            <div class="tool-result">
+              <span class="exchange-label">Returned</span>
+              {example.result.map((line) => (
+                <span>{line}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </figure>
+    ))}
+
+    <noscript>
+      <p class="no-script-example">
+        You can also ask it to add a task with a due date and priority.
+      </p>
+    </noscript>
+    <div class="implementation-note">
+      <p>
+        I connected separate APIs for listening, answering, and speaking. Groq handles transcription
+        and the tool-calling LLM. ElevenLabs turns the reply into speech. The sidebar brings
+        provider choices and model settings into one place.
+      </p>
+      <p class="capability-note">Other tools cover contacts, email, weather, news, and expenses.</p>
+    </div>
+  </section>
+
+  <section class="application" aria-labelledby="application-title">
+    <h2 id="application-title">In the app</h2>
+    <figure>
+      <a
+        href={href('/media/rag-voice-assistant/conversation.webp')}
+        aria-label="Open full-size application screenshot"
+      >
+        <img
+          src={href('/media/rag-voice-assistant/conversation.webp')}
+          width="1310"
+          height="365"
+          loading="lazy"
+          alt="Cropped voice assistant conversation showing a calendar question and an answer about the team meeting"
+        />
+      </a>
+      <figcaption>A calendar exchange in the app.</figcaption>
+    </figure>
+  </section>
+</article>
+
+<script>
+  const page = document.querySelector<HTMLElement>('[data-voice-page]');
+  if (page && page.dataset.initialized !== 'true') {
+    page.dataset.initialized = 'true';
+    const examples = Array.from(page.querySelectorAll<HTMLButtonElement>('[data-example]')).flatMap(
+      (button) => {
+        const panel = page.querySelector<HTMLElement>(
+          `[data-case-panel="${button.dataset.example}"]`,
+        );
+        return panel ? [{ button, panel }] : [];
+      },
+    );
+    for (const example of examples) {
+      example.button.addEventListener('click', () => {
+        for (const candidate of examples) {
+          candidate.panel.hidden = candidate !== example;
+          candidate.button.setAttribute('aria-pressed', String(candidate === example));
+        }
+      });
+    }
+    const controls = page.querySelector<HTMLElement>('[data-question-controls]');
+    if (controls && examples.length === 2) controls.hidden = false;
+  }
+</script>
+
+<style>
+  .voice-page {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 48px 28px 80px;
+    font:
+      17px/1.6 'Fira Mono',
+      monospace;
+  }
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+  }
+  nav a {
+    padding: 8px 0;
+    text-decoration: none;
+  }
+  nav a:hover {
+    text-decoration: underline;
+  }
+  .github-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+  .github-link img {
+    width: 36px;
+    height: 36px;
+  }
+  header {
+    max-width: 960px;
+    margin: 48px 0 52px;
+  }
+  h1 {
+    margin: 0 0 20px;
+    font-family: var(--sans);
+    font-size: 52.8px;
+    line-height: 1.1;
+    letter-spacing: -0.035em;
+  }
+  .intro {
+    margin: 0;
+    font:
+      italic 28.8px/1.4 Georgia,
+      serif;
+    color: var(--muted);
+    text-align: left;
+    text-wrap: pretty;
+  }
+  h2 {
+    margin: 0;
+    font: 500 23px/1.4 var(--sans);
+    letter-spacing: -0.015em;
+  }
+  .exchange-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+  }
+  .example-label {
+    color: #979b98;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  .question-choices {
+    display: flex;
+    gap: 30px;
+    margin: 20px 0 12px;
+  }
+  .question-choices button {
+    padding: 9px 0;
+    color: #999f98;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    font:
+      13px/1.5 'Fira Mono',
+      monospace;
+    cursor: pointer;
+    text-align: left;
+  }
+  .question-choices button[aria-pressed='true'] {
+    color: var(--text);
+    border-bottom-color: var(--text);
+  }
+  .question-choices button:hover {
+    color: var(--text);
+  }
+  a:focus-visible,
+  button:focus-visible {
+    outline: 2px solid #c0a364;
+    outline-offset: 5px;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  .case-panel {
+    margin: 0;
+  }
+  .architecture-art {
+    position: relative;
+    max-width: 793px;
+    margin: 16px auto 0;
+    border: 1px solid #353c35;
+  }
+  .case-panel img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .diagram-labels {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .stage-label {
+    position: absolute;
+    color: #e4e3db;
+    font-size: 16px;
+    line-height: 1.45;
+  }
+  .stage-label small {
+    display: block;
+    color: #b9bdad;
+    font-size: 12px;
+  }
+  .stage-input {
+    left: 14.5%;
+    top: 42.5%;
+    transform: translateX(-50%);
+  }
+  .stage-stt {
+    left: 37.3%;
+    top: 4.5%;
+  }
+  .stage-llm {
+    left: 78.8%;
+    top: 67%;
+    transform: translateX(-50%);
+    font-weight: 600;
+  }
+  .stage-llm small {
+    font-weight: 400;
+  }
+  .stage-tools {
+    left: 85%;
+    top: 4%;
+    transform: translateX(-50%);
+  }
+  .stage-tts {
+    left: 36.8%;
+    top: 87.5%;
+  }
+  .stage-output {
+    left: 14.5%;
+    top: 74%;
+    transform: translateX(-50%);
+  }
+  .tool-call,
+  .tool-result {
+    position: absolute;
+    color: #cfaa60;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+  .tool-call {
+    left: 77%;
+    top: 28.5%;
+    width: 14%;
+  }
+  .tool-call code {
+    font: inherit;
+  }
+  .tool-call code > span,
+  .tool-result > span {
+    display: block;
+  }
+  .tool-call code > span:first-child {
+    width: fit-content;
+    padding: 0 2px;
+    background: #181a1b;
+  }
+  .tool-result {
+    left: 90%;
+    top: 32.5%;
+    width: 9.5%;
+  }
+  .exchange-label {
+    display: none !important;
+  }
+  .implementation-note {
+    max-width: 760px;
+    margin: 24px auto 0;
+    color: #b5bab5;
+    font-size: 13px;
+    line-height: 1.9;
+  }
+  .implementation-note p {
+    margin: 0;
+  }
+  .implementation-note .capability-note {
+    margin-top: 16px;
+    font-size: 12px;
+  }
+  .no-script-example {
+    max-width: 760px;
+    margin: 18px auto;
+    font-size: 12px;
+  }
+  .application {
+    margin-top: 38px;
+    border-top: 1px solid #353c35;
+    padding-top: 24px;
+  }
+  .application figure {
+    margin: 20px 0 0;
+  }
+  .application img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid #3d423e;
+  }
+  .application figcaption {
+    margin-top: 12px;
+    color: #969d96;
+    font-size: 11px;
+  }
+  @media (max-width: 900px) {
+    .diagram-labels {
+      position: static;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px 20px;
+      margin-top: 18px;
+    }
+    .stage-label {
+      position: static;
+      transform: none;
+      font-size: 12px;
+    }
+    .stage-label small {
+      font-size: 11px;
+    }
+    .tool-exchange {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 18px;
+      margin-top: 20px;
+    }
+    .tool-call,
+    .tool-result {
+      position: static;
+      width: auto;
+      font-size: 11px;
+      overflow-wrap: anywhere;
+    }
+    .tool-call code > span:first-child {
+      padding: 0;
+      background: transparent;
+    }
+    .exchange-label {
+      display: block !important;
+      margin-bottom: 5px;
+      color: #999f98;
+      font-size: 10px;
+    }
+  }
+  @media (max-width: 760px) {
+    .voice-page {
+      padding: 28px 22px 48px;
+    }
+    nav {
+      font-size: 12px;
+    }
+    header {
+      margin: 34px 0 36px;
+    }
+    h1 {
+      font-size: clamp(31px, 7vw, 45px);
+      margin-bottom: 16px;
+    }
+    .intro {
+      font-size: 24px;
+      line-height: 1.4;
+    }
+    h2 {
+      font-size: 21px;
+    }
+    .exchange-heading {
+      display: block;
+    }
+    .example-label {
+      display: block;
+      margin-top: 7px;
+    }
+    .question-choices {
+      flex-wrap: wrap;
+      gap: 1px 20px;
+      margin: 15px 0 12px;
+    }
+    .question-choices button {
+      font-size: 11px;
+      min-height: 44px;
+    }
+    .implementation-note {
+      font-size: 12px;
+    }
+    .implementation-note .capability-note {
+      font-size: 11px;
+    }
+    .application {
+      margin-top: 24px;
+    }
+  }
+</style>

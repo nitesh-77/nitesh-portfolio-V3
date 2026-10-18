@@ -2,26 +2,41 @@
 import WorkCard from './WorkCard.astro';
 import type { Work } from '../lib/content';
 
-interface Props { entries: Work[] }
+interface Props {
+  entries: Work[];
+}
 const { entries } = Astro.props;
 const projects = entries.filter((entry) => entry.data.kind === 'project');
 const contributions = entries.filter((entry) => entry.data.kind === 'oss');
 ---
+
 <div class="work-tabs" data-work-tabs>
   <nav class="tab-list" aria-label="Work categories">
-    <a id="projects-tab" class="tab" href="#projects-panel">projects</a>
-    <a id="oss-tab" class="tab" href="#oss-panel">oss contributions</a>
+    <a id="projects-tab" class="tab" href="#projects-panel">
+      projects
+    </a>
+    <a id="oss-tab" class="tab" href="#oss-panel">
+      oss contributions
+    </a>
   </nav>
   <section id="projects-panel" class="work-panel" aria-labelledby="projects-heading">
-    <h2 id="projects-heading" class="section-heading">Projects</h2>
+    <h2 id="projects-heading" class="section-heading">
+      Projects
+    </h2>
     <div class="work-grid">
-      {projects.map((entry, index) => <WorkCard entry={entry} index={index + 1} />)}
+      {projects.map((entry) => (
+        <WorkCard entry={entry} />
+      ))}
     </div>
   </section>
   <section id="oss-panel" class="work-panel" aria-labelledby="oss-heading">
-    <h2 id="oss-heading" class="section-heading">Open source contributions</h2>
+    <h2 id="oss-heading" class="section-heading">
+      Open source contributions
+    </h2>
     <div class="work-grid">
-      {contributions.map((entry, index) => <WorkCard entry={entry} index={index + 1} />)}
+      {contributions.map((entry) => (
+        <WorkCard entry={entry} />
+      ))}
     </div>
   </section>
 </div>
@@ -44,6 +59,11 @@ const contributions = entries.filter((entry) => entry.data.kind === 'oss');
       });
     }
 
+    function select(index: number, focus = false) {
+      history.replaceState(history.state, '', tabs[index].hash);
+      activate(index, focus);
+    }
+
     list.setAttribute('role', 'tablist');
     tabs.forEach((tab, index) => {
       const panel = panels[index];
@@ -55,23 +75,38 @@ const contributions = entries.filter((entry) => entry.data.kind === 'oss');
       panel.tabIndex = 0;
       tab.addEventListener('click', (event) => {
         event.preventDefault();
-        activate(index);
+        select(index);
       });
       tab.addEventListener('keydown', (event) => {
         let next = index;
         switch (event.key) {
-          case 'ArrowRight': next = (index + 1) % tabs.length; break;
-          case 'ArrowLeft': next = (index - 1 + tabs.length) % tabs.length; break;
-          case 'Home': next = 0; break;
-          case 'End': next = tabs.length - 1; break;
-          case ' ': break;
-          default: return;
+          case 'ArrowRight':
+            next = (index + 1) % tabs.length;
+            break;
+          case 'ArrowLeft':
+            next = (index - 1 + tabs.length) % tabs.length;
+            break;
+          case 'Home':
+            next = 0;
+            break;
+          case 'End':
+            next = tabs.length - 1;
+            break;
+          case ' ':
+            break;
+          default:
+            return;
         }
         event.preventDefault();
-        activate(next, true);
+        select(next, true);
       });
     });
     root.dataset.enhanced = 'true';
-    activate(0);
+    const initialIndex = tabs.findIndex((tab) => tab.hash === location.hash);
+    activate(initialIndex >= 0 ? initialIndex : 0);
+    window.addEventListener('hashchange', () => {
+      const index = tabs.findIndex((tab) => tab.hash === location.hash);
+      if (index >= 0) activate(index);
+    });
   });
 </script>

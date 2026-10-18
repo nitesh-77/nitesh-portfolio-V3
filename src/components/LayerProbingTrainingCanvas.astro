@@ -1,0 +1,424 @@
+<div class="training-drawing" data-training-figure>
+  <canvas
+    data-probe-training
+    role="img"
+    aria-label="Schematic of training one probe. A forward hook copies a frozen layer's residual output. Frozen RMS normalization and a trainable affine readout produce the probe distribution. The full model supplies the teacher distribution. KL from teacher to probe updates only the probe's weights. Symbols represent quantities, not measured activation or probability values."
+  ></canvas>
+  <span class="note" data-note="model">
+    Frozen model
+  </span>
+  <span class="note capture-note" data-note="capture">
+    Forward hook
+  </span>
+  <span class="note" data-note="state">
+    Captured residual
+  </span>
+  <span class="note" data-note="norm">
+    Frozen RMS norm
+  </span>
+  <span class="note" data-note="teacher">
+    Teacher prediction
+  </span>
+  <span class="note" data-note="prediction">
+    Probe prediction
+  </span>
+  <span class="note update-note" data-note="update">
+    Update probe weights only
+  </span>
+  <span class="note continuation" data-note="continuation">
+    Later layers + frozen readout
+  </span>
+  <button
+    class="probe-target"
+    type="button"
+    aria-pressed="false"
+    aria-label="Highlight the probe weights that change during training"
+  >
+    <span>Linear probe</span>
+    <small>Hover or tap to inspect</small>
+  </button>
+  <p class="drawing-caption">One layer shown · symbolic states and predictions</p>
+  <noscript>
+    <p>
+      The model stays frozen. A captured residual passes through frozen RMS normalization and a
+      trainable linear probe. KL(teacher || probe) updates only the probe.
+    </p>
+  </noscript>
+</div>
+<script>
+  document.querySelectorAll<HTMLElement>('[data-training-figure]').forEach((figure) => {
+    const canvas = figure.querySelector<HTMLCanvasElement>('canvas');
+    const target = figure.querySelector<HTMLButtonElement>('button');
+    if (!canvas || !target) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let pinned = false,
+      hovered = false,
+      focused = false;
+    function draw() {
+      if (!ctx || !canvas || !target) return;
+      const mobile = canvas.clientWidth < 800;
+      const width = mobile ? 360 : 1040,
+        height = mobile ? 560 : 350;
+      const scale = canvas.clientWidth / width,
+        ratio = Math.min(devicePixelRatio, 2);
+      const active = pinned || hovered || focused;
+      figure.classList.toggle('inspecting', active);
+      const hint = target.querySelector('small');
+      if (hint) hint.textContent = active ? 'Only these weights change' : 'Hover or tap to inspect';
+      canvas.style.height = `${height * scale}px`;
+      canvas.width = Math.round(canvas.clientWidth * ratio);
+      canvas.height = Math.round(height * scale * ratio);
+      ctx.setTransform(scale * ratio, 0, 0, scale * ratio, 0, 0);
+      const style = getComputedStyle(canvas);
+      const white = style.getPropertyValue('--text').trim(),
+        muted = style.getPropertyValue('--secondary').trim(),
+        cyan = style.getPropertyValue('--active').trim(),
+        coral = style.getPropertyValue('--probe').trim();
+      const model = {
+        x: mobile ? 50 : 90,
+        y: mobile ? 48 : 65,
+        w: mobile ? 62 : 112,
+        gap: mobile ? 5.1 : 6.5,
+      };
+      const state = { x: mobile ? 174 : 320, y: mobile ? 163 : 173 };
+      const norm = { x: mobile ? 174 : 470, y: mobile ? 280 : 173 };
+      const probe = { x: mobile ? 174 : 640, y: mobile ? 385 : 173 };
+      const teacher = { x: mobile ? 303 : 825, y: mobile ? 85 : 65 };
+      const prediction = { x: mobile ? 303 : 825, y: mobile ? 385 : 173 };
+      const loss = { x: mobile ? 303 : 955, y: mobile ? 245 : 115 };
+      const hook = { x: model.x + model.w / 2, y: model.y + 13 * model.gap };
+      function curve(points: number[], color: string, dashed = false, arrow = true) {
+        if (!ctx) return;
+        const [x = 0, y = 0, cx = 0, cy = 0, dx = 0, dy = 0, ex = 0, ey = 0] = points;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.4;
+        ctx.setLineDash(dashed ? [3, 5] : []);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.bezierCurveTo(cx, cy, dx, dy, ex, ey);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        if (arrow) {
+          const angle = Math.atan2(ey - dy, ex - dx);
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.moveTo(ex, ey);
+          ctx.lineTo(ex - 7 * Math.cos(angle - 0.4), ey - 7 * Math.sin(angle - 0.4));
+          ctx.lineTo(ex - 7 * Math.cos(angle + 0.4), ey - 7 * Math.sin(angle + 0.4));
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+      function symbol(text: string, x: number, y: number, color = white, size = 24) {
+        if (!ctx) return;
+        ctx.font = `italic ${size}px Georgia,serif`;
+        ctx.fillStyle = color;
+        ctx.textBaseline = 'middle';
+        const separator = text.indexOf('_');
+        if (separator < 0) {
+          ctx.textAlign = 'center';
+          ctx.fillText(text, x, y);
+          return;
+        }
+        const base = text.slice(0, separator),
+          index = text.slice(separator + 1);
+        const baseWidth = ctx.measureText(base).width;
+        ctx.font = `italic ${size * 0.65}px Georgia,serif`;
+        const indexWidth = ctx.measureText(index).width,
+          left = x - (baseWidth + indexWidth) / 2;
+        ctx.textAlign = 'left';
+        ctx.font = `italic ${size}px Georgia,serif`;
+        ctx.fillText(base, left, y);
+        ctx.font = `italic ${size * 0.65}px Georgia,serif`;
+        ctx.fillText(index, left + baseWidth, y + size * 0.3);
+      }
+      function vector(x: number, y: number, entries: string[], color: string, small = false) {
+        if (!ctx) return;
+        const h = small ? 54 : 96,
+          w = small ? 42 : 58;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x - w / 2 + 6, y - h / 2);
+        ctx.lineTo(x - w / 2, y - h / 2);
+        ctx.lineTo(x - w / 2, y + h / 2);
+        ctx.lineTo(x - w / 2 + 6, y + h / 2);
+        ctx.moveTo(x + w / 2 - 6, y - h / 2);
+        ctx.lineTo(x + w / 2, y - h / 2);
+        ctx.lineTo(x + w / 2, y + h / 2);
+        ctx.lineTo(x + w / 2 - 6, y + h / 2);
+        ctx.stroke();
+        entries.forEach((entry, i) =>
+          symbol(
+            entry,
+            x,
+            y + (i - (entries.length - 1) / 2) * (small ? 17 : 25),
+            color,
+            small ? 15 : 19,
+          ),
+        );
+      }
+      for (let layer = 0; layer < 28; layer++) {
+        const y = model.y + layer * model.gap;
+        ctx.strokeStyle = layer === 13 ? cyan : muted;
+        ctx.globalAlpha = layer === 13 ? 1 : active ? 0.3 : 0.48;
+        ctx.lineWidth = layer === 13 ? 1.5 : 0.7;
+        ctx.beginPath();
+        ctx.moveTo(model.x - model.w / 2, y);
+        ctx.lineTo(model.x + model.w / 2, y);
+        ctx.lineTo(model.x + model.w / 2 - 9, y + 4);
+        ctx.lineTo(model.x - model.w / 2 - 9, y + 4);
+        ctx.closePath();
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      const teacherColor = active ? '#63707c' : muted;
+      curve(
+        [model.x, model.y - 4, model.x, 20, teacher.x - 60, 20, teacher.x - 22, teacher.y],
+        teacherColor,
+      );
+      curve(
+        [hook.x, hook.y, hook.x + 42, hook.y, state.x - 75, state.y, state.x - 31, state.y],
+        cyan,
+      );
+      ctx.fillStyle = cyan;
+      ctx.beginPath();
+      ctx.arc(hook.x, hook.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+      vector(state.x, state.y, ['h₁', 'h₂', '⋮', 'h_d'], cyan);
+      if (mobile) {
+        curve([state.x, state.y + 50, state.x, 230, norm.x, 230, norm.x, norm.y - 28], cyan);
+        curve([norm.x, norm.y + 28, norm.x, 335, probe.x, 335, probe.x, probe.y - 44], cyan);
+      } else {
+        curve(
+          [state.x + 31, state.y, state.x + 65, state.y, norm.x - 50, norm.y, norm.x - 29, norm.y],
+          cyan,
+        );
+        curve(
+          [norm.x + 29, norm.y, norm.x + 65, norm.y, probe.x - 70, probe.y, probe.x - 42, probe.y],
+          cyan,
+        );
+      }
+      ctx.strokeStyle = muted;
+      ctx.lineWidth = 1.2;
+      for (const radius of [23, 28]) {
+        ctx.beginPath();
+        ctx.arc(norm.x, norm.y, radius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      symbol('RMS', norm.x, norm.y, white, 14);
+      const pw = 72,
+        ph = 88;
+      if (active) {
+        ctx.fillStyle = '#f1a28d16';
+        ctx.fillRect(probe.x - pw / 2 - 7, probe.y - ph / 2 - 7, pw + 14, ph + 14);
+      }
+      ctx.strokeStyle = coral;
+      ctx.lineWidth = active ? 1.8 : 1;
+      ctx.strokeRect(probe.x - pw / 2, probe.y - ph / 2, pw, ph);
+      symbol('Wₗ', probe.x, probe.y - 9, coral, 31);
+      symbol('+ bₗ', probe.x, probe.y + 23, coral, 16);
+      curve(
+        [
+          probe.x + 42,
+          probe.y,
+          probe.x + 75,
+          probe.y,
+          prediction.x - 55,
+          prediction.y,
+          prediction.x - 24,
+          prediction.y,
+        ],
+        coral,
+      );
+      vector(teacher.x, teacher.y, ['t₁', '⋮', 't_V'], teacherColor, true);
+      vector(prediction.x, prediction.y, ['p₁', '⋮', 'p_V'], coral, true);
+      curve(
+        [
+          teacher.x + 24,
+          teacher.y,
+          teacher.x + 65,
+          teacher.y,
+          loss.x,
+          loss.y - 60,
+          loss.x,
+          loss.y - 25,
+        ],
+        teacherColor,
+      );
+      if (mobile)
+        curve(
+          [prediction.x, prediction.y - 29, prediction.x, 335, loss.x, 310, loss.x, loss.y + 25],
+          coral,
+        );
+      else
+        curve(
+          [
+            prediction.x + 24,
+            prediction.y,
+            prediction.x + 75,
+            prediction.y,
+            loss.x,
+            loss.y + 55,
+            loss.x,
+            loss.y + 25,
+          ],
+          coral,
+        );
+      ctx.strokeStyle = white;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(loss.x, loss.y, 24, 0, Math.PI * 2);
+      ctx.stroke();
+      symbol('KL', loss.x, loss.y, white, 17);
+      if (mobile) {
+        curve([loss.x + 25, loss.y, 365, loss.y, 350, 518, probe.x, 518], coral, true, false);
+        curve([probe.x, 518, probe.x, 490, probe.x, 470, probe.x, probe.y + 46], coral, true);
+      } else
+        curve([loss.x, loss.y + 26, loss.x, 300, probe.x, 300, probe.x, probe.y + 46], coral, true);
+      const labels: Record<string, { x: number; y: number }> = {
+        model: { x: model.x, y: model.y + 27 * model.gap + 27 },
+        capture: { x: mobile ? 126 : 205, y: hook.y - 20 },
+        state: { x: state.x, y: state.y + 70 },
+        norm: { x: mobile ? 67 : norm.x, y: mobile ? norm.y : norm.y + 56 },
+        teacher: { x: teacher.x, y: teacher.y + 45 },
+        prediction: { x: prediction.x, y: prediction.y + 45 },
+        loss: { x: loss.x, y: loss.y + 45 },
+        update: { x: mobile ? 200 : 790, y: mobile ? 539 : 310 },
+        continuation: { x: mobile ? 180 : 490, y: mobile ? 16 : 16 },
+      };
+      figure.querySelectorAll<HTMLElement>('[data-note]').forEach((note) => {
+        const point = labels[note.dataset.note ?? ''];
+        if (!point) return;
+        note.style.left = `${(point.x / width) * 100}%`;
+        note.style.top = `${point.y * scale}px`;
+      });
+      target.style.left = `${((probe.x - 48) / width) * 100}%`;
+      target.style.top = `${(probe.y - 52) * scale}px`;
+      target.style.width = `${96 * scale}px`;
+      target.style.height = `${150 * scale}px`;
+    }
+    target.addEventListener('mouseenter', () => {
+      hovered = true;
+      draw();
+    });
+    target.addEventListener('mouseleave', () => {
+      hovered = false;
+      draw();
+    });
+    target.addEventListener('focus', () => {
+      focused = true;
+      draw();
+    });
+    target.addEventListener('blur', () => {
+      focused = false;
+      draw();
+    });
+    target.addEventListener('click', () => {
+      pinned = !pinned;
+      target.setAttribute('aria-pressed', String(pinned));
+      draw();
+    });
+    const observer = new ResizeObserver(draw);
+    observer.observe(canvas);
+    document.fonts.ready.then(draw);
+    draw();
+    window.addEventListener('pagehide', () => observer.disconnect(), { once: true });
+  });
+</script>
+<style>
+  .training-drawing {
+    position: relative;
+    max-width: 1040px;
+    margin: 35px auto 24px;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+  }
+  .note {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font: 13px/1.5 var(--sans);
+    color: var(--secondary);
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .capture-note {
+    color: var(--active);
+  }
+  .update-note {
+    color: var(--probe);
+  }
+  .continuation {
+    font-size: 12px;
+  }
+  .probe-target {
+    position: absolute;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    color: var(--probe);
+    cursor: pointer;
+    font: 14px/1.4 var(--sans);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .probe-target span {
+    white-space: nowrap;
+  }
+  .probe-target small {
+    font-size: 11px;
+    color: var(--secondary);
+    white-space: nowrap;
+    margin-top: 3px;
+  }
+  .probe-target:focus-visible {
+    outline: 1px solid var(--probe);
+    outline-offset: 7px;
+  }
+  .inspecting .note:not(.capture-note):not(.update-note) {
+    color: #87909a;
+  }
+  .inspecting .update-note {
+    font-weight: 600;
+  }
+  .drawing-caption {
+    margin: 0;
+    text-align: center;
+    font-size: 11px;
+    color: var(--secondary);
+  }
+  @media (max-width: 799px) {
+    .training-drawing {
+      max-width: 420px;
+    }
+    .note {
+      font-size: 11px;
+    }
+    .continuation {
+      font-size: 10px;
+    }
+    .probe-target {
+      font-size: 13px;
+    }
+    .probe-target small {
+      font-size: 9px;
+    }
+    .drawing-caption {
+      font-size: 10px;
+    }
+    .note[data-note='norm'] {
+      max-width: 80px;
+      white-space: normal;
+    }
+    .note[data-note='loss'] {
+      font-size: 10px;
+    }
+  }
+</style>

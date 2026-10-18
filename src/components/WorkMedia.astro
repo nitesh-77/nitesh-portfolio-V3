@@ -4,19 +4,23 @@ import { href } from '../lib/href';
 
 interface Props {
   media: Media;
-  index: number;
 }
 
-const { media, index } = Astro.props;
+const { media } = Astro.props;
 ---
+
 <div class="work-media">
   {media.kind === 'placeholder' ? (
-    <div class="placeholder" aria-hidden="true">
-      <span class="placeholder-index">{String(index).padStart(2, '0')}</span>
-      <span class="placeholder-mark"></span>
-    </div>
+    <div class="placeholder" aria-hidden="true"></div>
   ) : media.kind === 'image' ? (
-    <img src={href(media.src)} alt={media.alt} loading="lazy" width="1600" height="900" />
+    <img
+      src={href(media.src)}
+      alt={media.alt}
+      style={{ objectFit: media.fit ?? 'cover' }}
+      loading="lazy"
+      width="1600"
+      height="900"
+    />
   ) : media.kind === 'video' ? (
     <video
       data-loop-media
@@ -31,10 +35,12 @@ const { media, index } = Astro.props;
       playsinline
       preload="metadata"
     />
-  ) : (() => {
-    const exhaustive: never = media;
-    return exhaustive;
-  })()}
+  ) : (
+    (() => {
+      const exhaustive: never = media;
+      return exhaustive;
+    })()
+  )}
 </div>
 
 <script>
@@ -44,25 +50,34 @@ const { media, index } = Astro.props;
   function update(video: HTMLVideoElement) {
     if (!document.hidden && visible.has(video)) {
       video.muted = true;
-      void video.play().then(() => {
-        video.controls = false;
-      }).catch((error: unknown) => {
-        video.controls = true;
-        console.warn('Project preview playback could not start:', video.currentSrc, error);
-      });
+      void video
+        .play()
+        .then(() => {
+          video.controls = false;
+        })
+        .catch((error: unknown) => {
+          video.controls = true;
+          console.warn('Project preview playback could not start:', video.currentSrc, error);
+        });
     } else {
       video.pause();
     }
   }
 
-  const observer = 'IntersectionObserver' in window ? new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (!(entry.target instanceof HTMLVideoElement)) continue;
-      if (entry.isIntersecting) visible.add(entry.target);
-      else visible.delete(entry.target);
-      update(entry.target);
-    }
-  }, { threshold: 0 }) : null;
+  const observer =
+    'IntersectionObserver' in window
+      ? new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!(entry.target instanceof HTMLVideoElement)) continue;
+              if (entry.isIntersecting) visible.add(entry.target);
+              else visible.delete(entry.target);
+              update(entry.target);
+            }
+          },
+          { threshold: 0 },
+        )
+      : null;
 
   videos.forEach((video) => {
     video.muted = true;

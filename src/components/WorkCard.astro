@@ -5,19 +5,21 @@ import { href } from '../lib/href';
 
 interface Props {
   entry: Work;
-  index: number;
 }
 
-const { entry, index } = Astro.props;
+const { entry } = Astro.props;
 const target = href(workPath(entry));
 ---
+
 <article class="work-item">
   <a class="thumbnail-link" href={target} aria-label={`Read about ${entry.data.title}`}>
-    <WorkMedia media={entry.data.media ?? { kind: 'placeholder' }} index={index} />
+    <WorkMedia media={entry.data.media ?? { kind: 'placeholder' }} />
   </a>
   <h3 class="work-title">
     <a class="title-link" href={target} aria-label={entry.data.title}>
-      <span class="glitch-title" data-title={entry.data.title}>{entry.data.title}</span>
+      <span class="glitch-title" data-title={entry.data.title}>
+        {entry.data.title}
+      </span>
     </a>
   </h3>
   <p class="work-description">{entry.data.description}</p>

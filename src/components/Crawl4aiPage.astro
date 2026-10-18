@@ -1,0 +1,185 @@
+---
+import { href } from '../lib/href';
+
+type Contribution = {
+  readonly title: string;
+  readonly description: string;
+  readonly url: string;
+  readonly status: string;
+  readonly icon: string;
+};
+
+const contributions: readonly Contribution[] = [
+  {
+    title: 'Keeping the crawler responsive',
+    description:
+      'When a page did not specify its text encoding, Crawl4AI ran encoding detection on the event loop, holding up other tasks. I moved that work into a worker thread so the crawler could continue handling other tasks while detection ran. Pages still fall back to UTF-8 when no encoding is detected.',
+    url: 'https://github.com/unclecode/crawl4ai/pull/1760',
+    status: 'Merged · #1760',
+    icon: '/media/crawl4ai/pr-merged.png',
+  },
+  {
+    title: 'Fixing a crash when adding URL filters',
+    description:
+      'Adding a URL filter crashed because the method tried to append to a tuple, which does not support that operation. I changed it to create a new tuple containing the existing filters and the added filter. This preserved the tuple-based storage and kept method chaining working.',
+    url: 'https://github.com/unclecode/crawl4ai/pull/1759',
+    status: 'Merged · #1759',
+    icon: '/media/crawl4ai/pr-merged.png',
+  },
+];
+---
+
+<article class="crawl4ai-page">
+  <nav aria-label="Project navigation">
+    <a href={href('/#oss-panel')}>
+      <span aria-hidden="true">← </span>Back to contributions
+    </a>
+    <a
+      class="github-link"
+      href="https://github.com/unclecode/crawl4ai"
+      aria-label="View crawl4ai on GitHub"
+      title="crawl4ai on GitHub"
+    >
+      <img src={href('/media/crawl4ai/github.png')} width="36" height="36" alt="" />
+    </a>
+  </nav>
+
+  <header>
+    <h1>crawl4ai</h1>
+    <p class="intro">
+      An open-source Python library for crawling websites and extracting their content.
+    </p>
+  </header>
+
+  <div class="contributions">
+    {contributions.map((contribution) => (
+      <section>
+        <h2>{contribution.title}</h2>
+        <p>{contribution.description}</p>
+        <a class="pr-link" href={contribution.url}>
+          <img src={href(contribution.icon)} width="28" height="28" alt="" />
+          <span>{contribution.status}</span>
+        </a>
+      </section>
+    ))}
+  </div>
+</article>
+
+<style>
+  .crawl4ai-page {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 48px 28px 64px;
+    font:
+      15px/1.75 'Fira Mono',
+      monospace;
+  }
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+  }
+  nav a {
+    padding: 8px 0;
+    text-decoration: none;
+  }
+  nav a:hover {
+    text-decoration: underline;
+  }
+  .github-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+  .github-link img {
+    display: block;
+    width: 36px;
+    height: 36px;
+  }
+  header {
+    margin: 36px 0 40px;
+  }
+  h1 {
+    margin: 0 0 20px;
+    font-family: var(--sans);
+    font-size: 52.8px;
+    line-height: 1.1;
+    letter-spacing: -0.035em;
+  }
+  .intro {
+    max-width: 850px;
+    margin: 0;
+    color: var(--muted);
+    font:
+      italic 26px/1.4 Georgia,
+      serif;
+    text-align: left;
+    text-wrap: pretty;
+  }
+  .contributions {
+    max-width: 850px;
+  }
+  section {
+    padding: 28px 0;
+    border-top: 1px solid #353c35;
+  }
+  h2 {
+    margin: 0 0 14px;
+    font: 24px/1.3 var(--sans);
+    letter-spacing: -0.02em;
+  }
+  section p {
+    margin: 0 0 16px;
+    color: var(--muted);
+  }
+  .pr-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    text-decoration: none;
+  }
+  .pr-link img {
+    display: block;
+    flex: none;
+    width: 28px;
+    height: 28px;
+  }
+  .pr-link:hover span {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  a:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 5px;
+  }
+  @media (max-width: 760px) {
+    .crawl4ai-page {
+      padding: 28px 22px 48px;
+    }
+    nav {
+      font-size: 12px;
+    }
+    header {
+      margin: 28px 0 32px;
+    }
+    h1 {
+      margin-bottom: 16px;
+      font-size: clamp(31px, 7vw, 45px);
+    }
+    .intro {
+      font-size: 24px;
+      line-height: 1.4;
+    }
+    h2 {
+      font-size: 22px;
+    }
+    section {
+      padding: 24px 0;
+    }
+  }
+</style>

@@ -1,0 +1,158 @@
+---
+kind: project
+presentation: visual
+title: reinforced-qwen-grpo
+description: 'Training Qwen3.5-4B with reinforcement learning on verifiable data analysis tasks.'
+order: 0
+media:
+  kind: image
+  fit: contain
+  src: /media/reinforced-qwen-grpo/qwen-rl-environments.png
+  alt: 'Conceptual illustration of RL environments improving model performance, with the Qwen logo on a rising cyan curve.'
+---
+
+import { href } from '../../lib/href';
+
+<article class="grpo-page">
+  <nav class="grpo-nav" aria-label="Project navigation">
+    <a href={href('/')}><span aria-hidden="true">← </span>Back home</a>
+    <div class="grpo-project-links">
+      <a class="grpo-logo-link" href="https://github.com/nitesh-77/reinforced-qwen-grpo" aria-label="View project code on GitHub" title="Project code on GitHub">
+        <img src={href('/media/brands/github.svg')} width="36" height="36" alt="" />
+        <span>GitHub</span>
+      </a>
+      <a class="grpo-logo-link" href="https://huggingface.co/nitesh-77/reinforced-qwen-grpo" aria-label="View trained weights on Hugging Face" title="Trained weights on Hugging Face">
+        <img src={href('/media/brands/huggingface.svg')} width="36" height="36" alt="" />
+        <span>Weights</span>
+      </a>
+    </div>
+  </nav>
+  <header class="grpo-header">
+    <h1>reinforced-qwen-grpo</h1>
+    <p>Training Qwen3.5-4B with reinforcement learning on verifiable data analysis tasks.</p>
+  </header>
+<div class="grpo-article">
+  <section aria-labelledby="what-i-built">
+    <h2 id="what-i-built">What I built</h2>
+    <p>Can you make a 4-billion-parameter model comparable to a 27-billion-parameter model using RL? RL environments keep coming up in recent model releases. They give models tasks to practice and a way to check their answers. Xiaomi released <a href="https://mimo.mi.com/docs/en-US/news/latest/v2-6">thousands of open RL environments with MiMo-V2.6</a>, and Hugging Face's FineEnvs project includes environments for small models. I wanted to explore one simple question: can you use these open environments on your own hardware to make a small model better?</p>
+    <p>I used <a href="https://huggingface.co/datasets/FineEnvs/SmolDataEnvs">SmolDataEnvs</a>, a collection of verifiable data analysis tasks built around real Kaggle datasets. The model gets a file and a question, investigates through a terminal, and saves its answer. I added a local sandbox and a stricter checker, then trained Qwen3.5-4B with rank-64 LoRA adapters on an <strong class="gpu-name">AMD Instinct MI300X</strong>.</p>
+    <figure>
+      <a href={href('/media/reinforced-qwen-grpo/data-task.png')} target="_blank" rel="noopener noreferrer" aria-label="Open the data analysis task illustration at full size">
+        <img src={href('/media/reinforced-qwen-grpo/data-task.png')} width="1445" height="815" alt="A video game sales dataset and a question asking which publisher has the highest total sales." />
+      </a>
+      <figcaption>A real file, a question, and an answer the environment can check. Click any image to enlarge it.</figcaption>
+    </figure>
+  </section>
+
+<section aria-labelledby="how-it-works">
+  <h2 id="how-it-works">How it works</h2>
+  <p>
+    The original checker could accept "42, yes" when the expected answer was "42." I wrote a
+    stricter checker that requires a bare numeric answer for numeric tasks, and used it as the
+    training reward.
+  </p>
+  <p>
+    I used TRL's <a href="https://huggingface.co/docs/trl/grpo_trainer">GRPO trainer</a> to update
+    the model from the environment's rewards. For each task, the model makes eight attempts. The
+    checker rewards a correct answer with 1 and an incorrect answer with 0. Training reinforces
+    attempts that beat their group's average reward.
+  </p>
+  <p>
+    Groups where every attempt succeeds or fails offer no relative reward signal. I screened about
+    1,000 tasks and kept 240 with mixed success. These gave the model useful opportunities to
+    practice.
+  </p>
+  <figure>
+    <a
+      href={href('/media/reinforced-qwen-grpo/grpo-attempts.png')}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Open the eight-attempt GRPO illustration at full size"
+    >
+      <img
+        src={href('/media/reinforced-qwen-grpo/grpo-attempts.png')}
+        width="1434"
+        height="787"
+        alt="Eight attempts at the same task receive correct or incorrect rewards for group-relative reinforcement learning."
+        loading="lazy"
+      />
+    </a>
+    <figcaption>Eight attempts at one task supply the comparison GRPO learns from.</figcaption>
+  </figure>
+</section>
+
+  <section aria-labelledby="what-happened">
+    <h2 id="what-happened">What happened</h2>
+    <fieldset class="grpo-results">
+      <legend>Compare evaluation results</legend>
+      <input id="grpo-results-all" type="radio" name="grpo-results" value="all" />
+      <label for="grpo-results-all">All 394 tasks</label>
+      <input id="grpo-results-unseen" type="radio" name="grpo-results" value="unseen" checked />
+      <label for="grpo-results-unseen">87 unseen-dataset tasks</label>
+      <div class="grpo-result-view grpo-result-all">
+        <p>Across the full exam, RL improved the score from <strong>51.8% to 58.4%</strong>. Follow-up runs with more RL and teacher distillation stayed around 58%. The 27B-FP8 reference scored 64.0%.</p>
+        <figure>
+          <a href={href('/media/reinforced-qwen-grpo/results.png')} target="_blank" rel="noopener noreferrer" aria-label="Open the full-exam results comparison at full size">
+            <img src={href('/media/reinforced-qwen-grpo/results.png')} width="1377" height="735" alt="Reported strict accuracy on all 394 tasks: base 4B 51.8%, RL 58.4%, more RL 58.1%, distilled 58.1%, distillation plus RL 58.6%, and 27B 64.0%." loading="lazy" />
+          </a>
+          <figcaption>Strict pass@1 with greedy decoding on all 394 held-out tasks. The exam was reused across checkpoints.</figcaption>
+        </figure>
+      </div>
+      <div class="grpo-result-view grpo-result-unseen">
+        <p>On tasks from datasets absent from training, the reported score rose from <strong>52.9% to 62.1%</strong> after teacher distillation followed by RL. The 27B-FP8 reference scored 64.4% on this same subset.</p>
+        <figure>
+          <a href={href('/media/reinforced-qwen-grpo/unseen-results.png')} target="_blank" rel="noopener noreferrer" aria-label="Open the unseen-dataset results comparison at full size">
+            <img src={href('/media/reinforced-qwen-grpo/unseen-results.png')} width="1459" height="798" alt="Reported strict accuracy on 87 unseen-dataset tasks: base 4B 52.9%, RL 58.6%, more RL 54.0%, distilled 57.5%, distillation plus RL 62.1%, and 27B 64.4%." loading="lazy" />
+          </a>
+          <figcaption>Strict pass@1 with greedy decoding on the 87-task unseen-dataset subset of the 394-task exam. The exam was reused across checkpoints.</figcaption>
+        </figure>
+      </div>
+    </fieldset>
+    <p>In the initial RL comparison, episodes ending without an answer fell from 99 to 72. The overall scores plateaued, while distillation followed by RL gave the strongest reported result on unseen datasets.</p>
+    <p class="grpo-run-note">These saved exam results come from earlier project runs. The later MI300X adapter has not been re-evaluated on this exam.</p>
+  </section>
+</div>
+</article>
+
+<style>{`
+  .grpo-page { max-width: 1200px; margin: 0 auto; padding: 32px 32px 96px; overflow-wrap: anywhere; }
+  .grpo-nav { display: flex; align-items: center; justify-content: space-between; gap: 24px; font: 14px/1.65 'Fira Mono', monospace; }
+  .grpo-nav a { text-decoration: none; }
+  .grpo-nav a:hover { color: var(--accent); }
+  .grpo-project-links { display: flex; align-items: center; gap: 16px; }
+  .grpo-logo-link { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 44px; min-height: 44px; font-size: 12px; line-height: 1.2; }
+  .grpo-logo-link img { width: 36px; height: 36px; }
+  .grpo-header { max-width: 794px; margin: 48px auto 32px; }
+  .grpo-header h1 { margin: 0 0 18px; font: 400 40px/1.3 var(--sans); }
+  .grpo-header p { margin: 0; color: var(--muted); font: italic 22px/1.7 var(--serif); }
+  .grpo-article { max-width: 794px; margin: 0 auto; font: 17px/1.65 'Fira Mono', monospace; }
+  .grpo-article h2 { margin: 2rem 0 0.8rem; font-family: var(--sans); font-size: 25px; line-height: 1.3; font-weight: 600; }
+  .grpo-article section:first-child h2 { margin-top: 0; }
+  .grpo-article p { margin: 0 0 1rem; }
+  .grpo-article .gpu-name { color: #e4bb7a; }
+  .grpo-article p a { color: #e4bb7a; }
+  .grpo-article p a:hover { color: var(--accent); }
+  .grpo-article figure { margin: 1.25rem 0; }
+  .grpo-article figure a { display: block; }
+  .grpo-article img { width: 100%; height: auto; }
+  .grpo-article figcaption { margin-top: 0.65rem; color: var(--muted); font-family: var(--sans); font-size: 13px; line-height: 1.5; }
+  .grpo-article .grpo-run-note { color: var(--muted); font-size: 17px; }
+  .grpo-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 24px; min-width: 0; margin: 20px 0 0; padding: 0; border: 0; }
+  .grpo-results legend, .grpo-results input { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .grpo-results label { display: flex; align-items: center; min-height: 44px; padding: 8px 0; border-bottom: 2px solid #505550; color: var(--muted); cursor: pointer; }
+  .grpo-results input:checked + label { border-color: var(--text); color: var(--text); }
+  .grpo-results input:focus-visible + label { outline: 2px solid var(--text); outline-offset: 4px; }
+  .grpo-result-view { display: none; grid-column: 1 / -1; min-width: 0; }
+  #grpo-results-all:checked ~ .grpo-result-all, #grpo-results-unseen:checked ~ .grpo-result-unseen { display: block; }
+  @media (max-width: 700px) {
+    .grpo-page { padding: 28px 22px 64px; }
+    .grpo-nav { font-size: 12px; }
+    .grpo-header { margin-top: 36px; }
+    .grpo-header h1 { font-size: 28px; }
+    .grpo-article { font-size: 16px; }
+    .grpo-article h2 { font-size: 23px; }
+    .grpo-article .grpo-run-note { font-size: 16px; }
+    .grpo-results { gap: 18px 16px; }
+    .grpo-results label { font-size: 14px; }
+  }
+`}</style>

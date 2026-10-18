@@ -1,0 +1,363 @@
+---
+import { href } from '../lib/href';
+---
+
+<distillation-experiment>
+  <div class="stage">
+    <div class="fallback">
+      <img
+        class="fallback-desktop"
+        src={href('/media/llm-layer-distillation/illustrations/initial-desktop.png')}
+        width="1100"
+        height="510"
+        alt="Qwen's 28 decoder blocks in a closed tower, with block 3 selected."
+      />
+      <img
+        class="fallback-mobile"
+        src={href('/media/llm-layer-distillation/illustrations/initial-mobile.png')}
+        width="346"
+        height="440"
+        alt="Qwen's 28 decoder blocks in a closed tower, with block 3 selected."
+      />
+    </div>
+    <canvas
+      data-scene
+      aria-label="Interactive schematic of Qwen decoder block 3. Drag to rotate. The slider pulls the third block out of the 28-block model, opens it, swaps attention for fitted Hyena, then closes and returns it."
+    ></canvas>
+    <span class="label" data-part="input">
+      Block input
+    </span>
+    <span class="label" data-part="norm1">
+      Input RMS norm
+    </span>
+    <span class="label" data-part="slot">
+      Attention<small>Original module</small>
+    </span>
+    <span class="label" data-part="norm2">
+      Post-attention
+      <br />
+      RMS norm
+    </span>
+    <span class="label" data-part="mlp">
+      MLP
+    </span>
+    <span class="label" data-part="output">
+      Block output
+    </span>
+    <span class="label" data-part="skip">
+      Residual bypasses
+    </span>
+    <span class="model-label" data-model-label="name">
+      Qwen · 28 blocks
+    </span>
+    <span class="model-label" data-model-label="selected">
+      3
+    </span>
+    <span class="model-label" data-model-label="input">
+      Input
+    </span>
+    <span class="model-label" data-model-label="output">
+      Final norm + readout
+    </span>
+    <div class="hint">
+      Drag to turn{' '}
+      <button data-reset type="button" disabled>
+        Reset view ↗
+      </button>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="scrubber">
+      <button class="play" data-play type="button" disabled aria-label="Play replacement animation">
+        ▶
+      </button>
+      <input
+        data-progress
+        disabled
+        type="range"
+        min="0"
+        max="1"
+        step="0.001"
+        value="0"
+        aria-label="Replacement sequence"
+      />
+    </div>
+    <div class="ends">
+      <span>Original Qwen</span>
+      <span>With fitted Hyena</span>
+    </div>
+    <p class="phase" data-phase aria-live="polite">
+      Qwen · 28 decoder blocks
+    </p>
+  </div>
+</distillation-experiment>
+
+<script>
+  import type { SceneController } from '../lib/distillation-scene';
+  class DistillationExperiment extends HTMLElement {
+    private observer?: IntersectionObserver;
+    private controller?: SceneController;
+    private generation = 0;
+    connectedCallback() {
+      const generation = ++this.generation;
+      this.observer = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        this.observer?.disconnect();
+        void this.mount(generation);
+      });
+      this.observer.observe(this);
+    }
+    private async mount(generation: number) {
+      try {
+        const { createDistillationScene } = await import('../lib/distillation-scene');
+        if (!this.isConnected || generation !== this.generation) return;
+        this.controller = createDistillationScene(this);
+      } catch {
+        this.dataset.ready = 'false';
+      }
+    }
+    disconnectedCallback() {
+      ++this.generation;
+      this.observer?.disconnect();
+      this.controller?.dispose();
+      this.controller = undefined;
+    }
+  }
+  if (!customElements.get('distillation-experiment'))
+    customElements.define('distillation-experiment', DistillationExperiment);
+</script>
+
+<style>
+  distillation-experiment {
+    display: block;
+    max-width: 1100px;
+    margin: 0 auto;
+    color: var(--text);
+    font-family: 'Fira Mono', monospace;
+    container-type: inline-size;
+  }
+  .stage {
+    height: 510px;
+    position: relative;
+  }
+  .stage > canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: pan-y;
+    cursor: grab;
+    visibility: hidden;
+  }
+  .stage > canvas:active {
+    cursor: grabbing;
+  }
+  .fallback {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .fallback img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .fallback-mobile {
+    display: none;
+  }
+  .label {
+    position: absolute;
+    pointer-events: none;
+    font:
+      13px/1.45 Arial,
+      sans-serif;
+    color: #bec2c2;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.12s;
+    visibility: hidden;
+  }
+  .label[data-part='slot'] {
+    color: #7cceef;
+    font-size: 15px;
+  }
+  .label :global(small) {
+    display: block;
+    font-size: 11px;
+    color: #929b9e;
+    margin-top: 3px;
+  }
+  .hint {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    font-size: 10px;
+    color: #929b9e;
+    visibility: hidden;
+  }
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    padding: 0;
+  }
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid #e4bb7a;
+    outline-offset: 6px;
+  }
+  .hint button {
+    margin-left: 18px;
+    color: #bec2c2;
+  }
+  .controls {
+    max-width: 520px;
+    margin: 19px auto 0;
+    display: block;
+    visibility: hidden;
+  }
+  .scrubber {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+  }
+  .play {
+    width: 26px;
+    height: 34px;
+    flex-shrink: 0;
+    font:
+      19px/1 Arial,
+      sans-serif;
+    color: #e8e6e3;
+  }
+  input {
+    width: 100%;
+    height: 30px;
+    margin: 0;
+    accent-color: #aab3b7;
+    cursor: ew-resize;
+  }
+  input[type='range'] {
+    appearance: none;
+    background: transparent;
+  }
+  input::-webkit-slider-runnable-track {
+    height: 3px;
+    background: #515b60;
+    border-radius: 4px;
+  }
+  input::-webkit-slider-thumb {
+    appearance: none;
+    width: 23px;
+    height: 23px;
+    border: 1px solid #aab3b7;
+    border-radius: 50%;
+    background: #677277;
+    margin-top: -10px;
+  }
+  input::-moz-range-track {
+    height: 3px;
+    background: #515b60;
+  }
+  input::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border: 1px solid #aab3b7;
+    border-radius: 50%;
+    background: #677277;
+  }
+  .ends {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 0 0 48px;
+    font-size: 10px;
+    color: #929b9e;
+  }
+  distillation-experiment .phase {
+    text-align: center;
+    min-height: 24px;
+    margin: 21px 0 0;
+    color: #e8e6e3;
+    font-size: 12px;
+  }
+  .model-label {
+    position: absolute;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    font:
+      11px/1.4 Arial,
+      sans-serif;
+    white-space: nowrap;
+    color: #aeb8bd;
+    visibility: hidden;
+  }
+  .model-label[data-model-label='selected'] {
+    color: #7cceef;
+    font:
+      12px 'Fira Mono',
+      monospace;
+  }
+  .model-label[data-model-label='name'] {
+    color: #c0c8ca;
+  }
+  [data-ready='true'] .fallback {
+    display: none;
+  }
+  [data-ready='true'] .stage > canvas,
+  [data-ready='true'] .label,
+  [data-ready='true'] .model-label,
+  [data-ready='true'] .hint {
+    visibility: visible;
+  }
+  [data-ready='true'] .controls {
+    visibility: visible;
+  }
+  distillation-experiment ~ :global(.story-section[aria-labelledby='learning']) {
+    margin-top: 64px;
+  }
+  @container (width < 600px) {
+    .fallback-desktop {
+      display: none;
+    }
+    .fallback-mobile {
+      display: block;
+    }
+  }
+  @media (max-width: 650px) {
+    .stage {
+      height: 440px;
+    }
+    .label {
+      font-size: 10px;
+    }
+    .label[data-part='slot'] {
+      font-size: 12px;
+    }
+    .label :global(small) {
+      font-size: 9px;
+    }
+    .hint {
+      font-size: 9px;
+    }
+    .hint button {
+      margin-left: 10px;
+    }
+    .controls {
+      margin-top: 20px;
+    }
+    .ends {
+      font-size: 9px;
+    }
+    .model-label {
+      font-size: 9px;
+    }
+    .model-label[data-model-label='selected'] {
+      font-size: 10px;
+    }
+    distillation-experiment ~ :global(.story-section[aria-labelledby='learning']) {
+      margin-top: 48px;
+    }
+  }
+</style>

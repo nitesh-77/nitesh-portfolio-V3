@@ -4,23 +4,59 @@ import WorkTabs from '../components/WorkTabs.astro';
 import { getWork } from '../lib/content';
 import { href } from '../lib/href';
 
-const intro = "I'm Nitesh, an engineering student interested in how computers actually work. I explore language model internals and build AI applications, with experiments in layer representations, local inference, and retrieval.";
+const intro =
+  "I'm Nitesh, an engineering grad interested in how computers actually work. I explore language model internals and build AI applications, with experiments in layer representations, local inference, and retrieval.";
 const entries = await getWork();
 ---
-<BaseLayout title="Nitesh | Engineering Student | AI & Machine Learning" description={intro}>
+
+<BaseLayout title="Nitesh" description={intro}>
   <main id="main" class="homepage">
     <header class="intro">
-      <h1>Engineering Student | AI &amp; Machine Learning</h1>
+      <h1>Engineering | AI &amp; Machine Learning</h1>
       <p class="intro-copy">{intro}</p>
-      <p class="invitation">Interested in language models, systems, or building something together? Let's talk.</p>
+      <p class="invitation">
+        Interested in language models, systems, or building something together? Let's talk.
+      </p>
       <div class="contacts">
-        <p>github: <a href="https://github.com/nitesh-77"><span class="github-at">@</span>nitesh-77</a></p>
-        <p>email: <a href="mailto:nitesh2003.dev@gmail.com">nitesh2003.dev [at] gmail (dot) com</a></p>
-        <p>i wrote few stuff: <a class="blogs-link" href={href('/blog/')}>blogs</a></p>
+        <p>
+          github:{' '}
+          <a href="https://github.com/nitesh-77">
+            <span class="github-at">@</span>nitesh-77
+          </a>
+        </p>
+        <p>
+          email: <a href="mailto:nitesh2003.dev@gmail.com">nitesh2003.dev [at] gmail (dot) com</a>
+        </p>
+        <p>
+          i wrote few stuff:{' '}
+          <a class="blogs-link" href={href('/blog/')}>
+            blogs
+          </a>
+        </p>
       </div>
     </header>
     <div class="work-area">
       <WorkTabs entries={entries} />
     </div>
+    <footer class="more-projects">
+      <a href="https://github.com/nitesh-77?tab=repositories">more projects on github ↗</a>
+    </footer>
   </main>
 </BaseLayout>
+
+<style>
+  .more-projects {
+    margin: 64px auto 0;
+    text-align: center;
+    font:
+      14px/1.6 'Fira Mono',
+      monospace;
+    color: var(--muted);
+  }
+  .more-projects a {
+    text-decoration-thickness: 1px;
+  }
+  .more-projects a:hover {
+    color: var(--accent);
+  }
+</style>

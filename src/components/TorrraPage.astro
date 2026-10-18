@@ -1,0 +1,171 @@
+---
+import { href } from '../lib/href';
+
+type Contribution = {
+  readonly title: string;
+  readonly description: string;
+  readonly url: string;
+  readonly status: string;
+  readonly icon: string;
+};
+
+const contribution: Contribution = {
+  title: 'Fixing startup on Python 3.10',
+  description:
+    'Torrra supported Python 3.10 but crashed when importing tomllib, which only became available in Python 3.11. I added a fallback to tomli for older Python versions. I also updated the conditional dependency and lock file so installations include the fallback when needed.',
+  url: 'https://github.com/stabldev/torrra/pull/234',
+  status: 'Merged · #234',
+  icon: '/media/torrra/pr-merged.png',
+};
+---
+
+<article class="torrra-page">
+  <nav aria-label="Project navigation">
+    <a href={href('/#oss-panel')}>
+      <span aria-hidden="true">← </span>Back to contributions
+    </a>
+    <a
+      class="github-link"
+      href="https://github.com/stabldev/torrra"
+      aria-label="View torrra on GitHub"
+      title="torrra on GitHub"
+    >
+      <img src={href('/media/torrra/github.png')} width="36" height="36" alt="" />
+    </a>
+  </nav>
+
+  <header>
+    <h1>torrra</h1>
+    <p class="intro">A Python tool for searching and downloading torrents from the terminal.</p>
+  </header>
+
+  <div class="contributions">
+    <section>
+      <h2>{contribution.title}</h2>
+      <p>{contribution.description}</p>
+      <a class="pr-link" href={contribution.url}>
+        <img src={href(contribution.icon)} width="28" height="28" alt="" />
+        <span>{contribution.status}</span>
+      </a>
+    </section>
+  </div>
+</article>
+
+<style>
+  .torrra-page {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 48px 28px 64px;
+    font:
+      15px/1.75 'Fira Mono',
+      monospace;
+  }
+  nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+  }
+  nav a {
+    padding: 8px 0;
+    text-decoration: none;
+  }
+  nav a:hover {
+    text-decoration: underline;
+  }
+  .github-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+  .github-link img {
+    display: block;
+    width: 36px;
+    height: 36px;
+  }
+  header {
+    margin: 36px 0 40px;
+  }
+  h1 {
+    margin: 0 0 20px;
+    font-family: var(--sans);
+    font-size: 52.8px;
+    line-height: 1.1;
+    letter-spacing: -0.035em;
+  }
+  .intro {
+    max-width: 850px;
+    margin: 0;
+    color: var(--muted);
+    font:
+      italic 26px/1.4 Georgia,
+      serif;
+    text-align: left;
+    text-wrap: pretty;
+  }
+  .contributions {
+    max-width: 850px;
+  }
+  section {
+    padding: 28px 0;
+    border-top: 1px solid #353c35;
+  }
+  h2 {
+    margin: 0 0 14px;
+    font: 24px/1.3 var(--sans);
+    letter-spacing: -0.02em;
+  }
+  section p {
+    margin: 0 0 16px;
+    color: var(--muted);
+  }
+  .pr-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    text-decoration: none;
+  }
+  .pr-link img {
+    display: block;
+    flex: none;
+    width: 28px;
+    height: 28px;
+  }
+  .pr-link:hover span {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  a:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 5px;
+  }
+  @media (max-width: 760px) {
+    .torrra-page {
+      padding: 28px 22px 48px;
+    }
+    nav {
+      font-size: 12px;
+    }
+    header {
+      margin: 28px 0 32px;
+    }
+    h1 {
+      margin-bottom: 16px;
+      font-size: clamp(31px, 7vw, 45px);
+    }
+    .intro {
+      font-size: 24px;
+      line-height: 1.4;
+    }
+    h2 {
+      font-size: 22px;
+    }
+    section {
+      padding: 24px 0;
+    }
+  }
+</style>

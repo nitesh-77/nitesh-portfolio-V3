@@ -5,20 +5,113 @@ import { href } from '../../lib/href';
 
 const posts = await getPublishedBlog();
 ---
-<BaseLayout title="Blogs | Nitesh" description="Writing by Nitesh about language models, systems, and AI applications.">
-  <main id="main" class="detail-page">
-    <a class="back-link" href={href('/')}>Back to home</a>
+
+<BaseLayout title="Blogs | Nitesh" description="Writing by Nitesh about learning and programming.">
+  <main id="main" class="blogs-page">
+    <a class="back-link" href={href('/')}>
+      Back home
+    </a>
     <h1>Blogs</h1>
-    {posts.length === 0 ? <p>Posts coming soon.</p> : (
-      <ul class="blog-list">
-        {posts.map((post) => (
-          <li>
-            <h2><a href={href(`/blog/${post.id}/`)}>{post.data.title}</a></h2>
-            <time datetime={post.data.published.toISOString()}>{post.data.published.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}</time>
-            <p>{post.data.description}</p>
-          </li>
-        ))}
-      </ul>
-    )}
+    <ul class="reading-list">
+      {posts.map((post) => (
+        <li>
+          <time datetime={post.data.published.toISOString()}>
+            {post.data.published.toLocaleDateString('en-GB', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              timeZone: 'UTC',
+            })}
+          </time>
+          <h2>
+            <a href={href(`/blog/${post.id}/`)}>
+              {post.data.title} <span aria-hidden="true">↗</span>
+            </a>
+          </h2>
+          <p>{post.data.description}</p>
+        </li>
+      ))}
+    </ul>
   </main>
 </BaseLayout>
+
+<style>
+  .blogs-page {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 48px 28px 64px;
+    overflow-wrap: anywhere;
+  }
+  .back-link {
+    font-family: 'Fira Mono', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  h1 {
+    margin: 36px 0 40px;
+    font-family: var(--sans);
+    font-size: 52.8px;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .reading-list {
+    max-width: 850px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  li {
+    border-top: 1px solid #353c35;
+    padding: 28px 0 32px;
+  }
+  time {
+    color: #a2a69f;
+    font-family: 'Fira Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  h2 {
+    margin: 16px 0 14px;
+    font-family: var(--sans);
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  h2 a {
+    text-decoration: none;
+  }
+  h2 a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+  }
+  h2 span {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 24px;
+    font-weight: 400;
+  }
+  p {
+    margin: 0;
+    color: var(--muted);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 26px;
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 700px) {
+    .blogs-page {
+      padding: 28px 22px 48px;
+    }
+    h1 {
+      margin-top: 28px;
+      font-size: clamp(31px, 8vw, 45px);
+    }
+    h2 {
+      font-size: 28px;
+    }
+    p {
+      font-size: 24px;
+    }
+  }
+</style>

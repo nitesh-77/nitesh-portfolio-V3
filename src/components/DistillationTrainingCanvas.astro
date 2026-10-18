@@ -1,0 +1,245 @@
+---
+import { href } from '../lib/href';
+---
+
+<distillation-training-canvas>
+  <img
+    src={href('/media/llm-layer-distillation/illustrations/training.png')}
+    width="1120"
+    height="388"
+    alt="Saved attention input u trains Hyena to produce â. Saved Qwen target a and Hyena output â are compared with mean squared error. Feedback updates Hyena only. Outputs are captured before residual addition."
+    loading="lazy"
+  />
+  <canvas aria-label="Saved input and target pairs train Hyena with mean squared error. Only Hyena is updated, using Qwen attention outputs captured before residual addition."></canvas>
+</distillation-training-canvas>
+
+<script>
+  const colors = {
+    ink: '#e8e6e3',
+    muted: '#aeb7c0',
+    cyan: '#7cceef',
+    coral: '#f1a28d',
+    bg: '#181a1b',
+  };
+  function text(
+    ctx: CanvasRenderingContext2D,
+    s: string,
+    x: number,
+    y: number,
+    color = colors.ink,
+    size = 16,
+    serif = false,
+  ) {
+    ctx.fillStyle = color;
+    ctx.font = `${serif ? 'italic ' : ''}${size}px ${serif ? 'Georgia' : 'Arial'},sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(s, x, y);
+  }
+  function curve(
+    ctx: CanvasRenderingContext2D,
+    points: [number, number, number, number, number, number, number, number],
+    color = colors.muted,
+    dashed = false,
+  ) {
+    const [x, y, cx, cy, dx, dy, ex, ey] = points;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash(dashed ? [3, 5] : []);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.bezierCurveTo(cx, cy, dx, dy, ex, ey);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    const a = Math.atan2(ey - dy, ex - dx);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - 6 * Math.cos(a - 0.4), ey - 6 * Math.sin(a - 0.4));
+    ctx.lineTo(ex - 6 * Math.cos(a + 0.4), ey - 6 * Math.sin(a + 0.4));
+    ctx.closePath();
+    ctx.fill();
+  }
+  function vector(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    label: string,
+    color = colors.ink,
+    size = 1,
+  ) {
+    const w = 24 * size,
+      h = 42 * size;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - w + 5, y - h);
+    ctx.lineTo(x - w, y - h);
+    ctx.lineTo(x - w, y + h);
+    ctx.lineTo(x - w + 5, y + h);
+    ctx.moveTo(x + w - 5, y - h);
+    ctx.lineTo(x + w, y - h);
+    ctx.lineTo(x + w, y + h);
+    ctx.lineTo(x + w - 5, y + h);
+    ctx.stroke();
+    text(ctx, label, x, y, color, 25 * size, true);
+  }
+  function training(ctx: CanvasRenderingContext2D, mobile: boolean) {
+    if (mobile) text(ctx, 'Capture before residual addition', 180, 15, colors.muted, 10);
+    const record = mobile ? { x: 50, y: 100 } : { x: 150, y: 140 },
+      hyena = mobile ? { x: 180, y: 220 } : { x: 520, y: 220 },
+      target = mobile ? { x: 300, y: 100 } : { x: 810, y: 100 },
+      prediction = mobile ? { x: 300, y: 310 } : { x: 810, y: 220 },
+      loss = mobile ? { x: 300, y: 205 } : { x: 960, y: 160 };
+    for (let i = 2; i >= 0; i--) {
+      ctx.strokeStyle = i ? '#56626c' : colors.muted;
+      ctx.strokeRect(record.x - 35 + i * 5, record.y - 42 - i * 5, 70, 84);
+    }
+    text(ctx, 'u', record.x - 15, record.y, colors.cyan, 24, true);
+    text(ctx, 'a', record.x + 15, record.y, colors.muted, 24, true);
+    text(ctx, 'Saved pairs', record.x, record.y + 67, colors.muted, 12);
+    if (mobile)
+      curve(
+        ctx,
+        [record.x + 35, record.y + 5, 125, 110, 120, hyena.y, hyena.x - 40, hyena.y],
+        colors.cyan,
+      );
+    else
+      curve(
+        ctx,
+        [record.x + 35, record.y + 15, 260, record.y + 15, 360, hyena.y, hyena.x - 50, hyena.y],
+        colors.cyan,
+      );
+    curve(
+      ctx,
+      [record.x + 35, record.y - 20, record.x + 80, 30, target.x - 60, 30, target.x - 25, target.y],
+      colors.muted,
+    );
+    text(ctx, 'ℋθ', hyena.x, hyena.y, colors.coral, 46, true);
+    for (let i = 0; i < 3; i++) {
+      ctx.strokeStyle = colors.coral;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(hyena.x - 30, hyena.y + 34 + i * 6);
+      ctx.lineTo(hyena.x + 30, hyena.y + 34 + i * 6);
+      ctx.stroke();
+    }
+    text(ctx, 'Hyena · trainable', hyena.x, hyena.y + 72, colors.coral, 13);
+    vector(ctx, target.x, target.y, 'a', colors.muted, 0.8);
+    text(ctx, 'Recorded Qwen target', target.x, mobile ? 48 : 45, colors.muted, mobile ? 10 : 13);
+    curve(
+      ctx,
+      [
+        hyena.x + 40,
+        hyena.y,
+        hyena.x + 70,
+        hyena.y,
+        prediction.x - 55,
+        prediction.y,
+        prediction.x - 25,
+        prediction.y,
+      ],
+      colors.coral,
+    );
+    vector(ctx, prediction.x, prediction.y, 'â', colors.coral, 0.8);
+    if (mobile) {
+      curve(ctx, [target.x, target.y + 37, target.x, 160, loss.x, 160, loss.x, loss.y - 24]);
+      curve(
+        ctx,
+        [prediction.x, prediction.y - 37, prediction.x, 255, loss.x, 255, loss.x, loss.y + 24],
+        colors.coral,
+      );
+      curve(ctx, [loss.x + 25, loss.y, 355, loss.y, 350, 390, hyena.x, 390], colors.coral, true);
+      curve(
+        ctx,
+        [hyena.x, 390, hyena.x, 350, hyena.x, 320, hyena.x, hyena.y + 45],
+        colors.coral,
+        true,
+      );
+      text(ctx, 'Update Hyena only', 180, 415, colors.coral, 12);
+    } else {
+      curve(ctx, [target.x + 25, target.y, 880, target.y, loss.x, 115, loss.x, loss.y - 24]);
+      curve(
+        ctx,
+        [prediction.x + 25, prediction.y, 880, prediction.y, loss.x, 205, loss.x, loss.y + 24],
+        colors.coral,
+      );
+      curve(
+        ctx,
+        [loss.x, loss.y + 25, loss.x, 360, hyena.x, 360, hyena.x, hyena.y + 49],
+        colors.coral,
+        true,
+      );
+      text(ctx, 'Update Hyena only', 760, 336, colors.coral, 12);
+      text(ctx, 'Capture before residual addition', 350, 43, colors.muted, 12);
+    }
+    ctx.strokeStyle = colors.ink;
+    ctx.beginPath();
+    ctx.arc(loss.x, loss.y, 23, 0, Math.PI * 2);
+    ctx.stroke();
+    text(ctx, 'MSE', loss.x, loss.y, colors.ink, 14, true);
+  }
+  class DistillationTrainingCanvas extends HTMLElement {
+    private observer?: ResizeObserver;
+    private generation = 0;
+    connectedCallback() {
+      const canvas = this.querySelector('canvas');
+      if (!(canvas instanceof HTMLCanvasElement)) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      const generation = ++this.generation;
+      const draw = () => {
+        if (!this.isConnected || generation !== this.generation) return;
+        const width = this.clientWidth;
+        if (!width) return;
+        const mobile = width < 700,
+          designWidth = mobile ? 360 : 1040;
+        const height = mobile ? 440 : 360,
+          scale = width / designWidth,
+          dpr = Math.min(devicePixelRatio, 2);
+        canvas.style.height = `${height * scale}px`;
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * scale * dpr);
+        ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+        training(ctx, mobile);
+        this.dataset.ready = 'true';
+      };
+      this.observer = new ResizeObserver(draw);
+      this.observer.observe(this);
+      void document.fonts.ready.then(draw);
+      draw();
+    }
+    disconnectedCallback() {
+      ++this.generation;
+      this.observer?.disconnect();
+      this.dataset.ready = 'false';
+    }
+  }
+  if (!customElements.get('distillation-training-canvas'))
+    customElements.define('distillation-training-canvas', DistillationTrainingCanvas);
+</script>
+
+<style>
+  distillation-training-canvas {
+    display: block;
+    width: 100%;
+    margin: 30px auto;
+  }
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 0;
+    visibility: hidden;
+  }
+  [data-ready='true'] img {
+    display: none;
+  }
+  [data-ready='true'] canvas {
+    visibility: visible;
+  }
+</style>

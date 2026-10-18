@@ -1,0 +1,329 @@
+---
+import { href } from '../lib/href';
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  description: string;
+  repository: string;
+  weightsUrl?: string;
+}
+
+const { eyebrow, title, description, repository, weightsUrl } = Astro.props;
+---
+
+<article class="project-story">
+  <nav class="story-nav" aria-label="Project navigation">
+    <a href={href('/')}>
+      <span aria-hidden="true">← </span>Back home
+    </a>
+    <div class="story-project-links">
+      <a
+        class="story-logo-link"
+        href={repository}
+        aria-label="View project code on GitHub"
+        title="Project code on GitHub"
+      >
+        <img src={href('/media/brands/github.svg')} width="36" height="36" alt="" />
+        <span>GitHub</span>
+      </a>
+      {weightsUrl && (
+        <a
+          class="story-logo-link"
+          href={weightsUrl}
+          aria-label="View trained weights on Hugging Face"
+          title="Trained weights on Hugging Face"
+        >
+          <img src={href('/media/brands/huggingface.svg')} width="36" height="36" alt="" />
+          <span>Weights</span>
+        </a>
+      )}
+    </div>
+  </nav>
+  <header class="story-header">
+    <h1>{title}</h1>
+    <p class="story-description">{description}</p>
+    <p class="story-context">{eyebrow}</p>
+  </header>
+  <div class="story-content">
+    <slot />
+  </div>
+  <dialog class="figure-dialog" aria-label="Expanded project figure">
+    <button class="close-figure" type="button">
+      Close figure ×
+    </button>
+    <div class="expanded-image" tabindex="0">
+      <img alt="" />
+    </div>
+  </dialog>
+</article>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.project-story').forEach((story) => {
+    const dialog = story.querySelector<HTMLDialogElement>('.figure-dialog');
+    const enlarged = dialog?.querySelector<HTMLImageElement>('img');
+    if (!dialog || !enlarged) return;
+    story.querySelectorAll<HTMLAnchorElement>('.figure-link').forEach((link) => {
+      link.addEventListener('click', (event) => {
+        const original = link.querySelector<HTMLImageElement>('img');
+        if (!original || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        enlarged.src = link.href;
+        enlarged.alt = original.alt;
+        dialog.showModal();
+      });
+    });
+    dialog.querySelector('button')?.addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+  });
+</script>
+
+<style>
+  .project-story {
+    max-width: 1200px;
+    margin-inline: auto;
+    padding: 32px 32px 80px;
+    background: var(--background);
+    color: var(--text);
+    font-family: 'Fira Mono', monospace;
+    --story-body-size: 17px;
+    font-size: var(--story-body-size);
+    line-height: 1.65;
+  }
+
+  .story-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    font-family: 'Fira Mono', monospace;
+    font-size: 14px;
+  }
+
+  .story-content :global(a) {
+    color: #e4bb7a;
+    text-decoration-thickness: 1px;
+  }
+
+  .story-nav a {
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .story-project-links {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-left: auto;
+  }
+
+  .story-logo-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .story-logo-link img {
+    display: block;
+    width: 36px;
+    height: 36px;
+  }
+
+  .story-nav a:hover {
+    color: var(--text);
+  }
+  .story-content :global(a:hover) {
+    color: var(--accent);
+  }
+
+  .story-header {
+    max-width: 1000px;
+    margin: 76px auto 52px;
+  }
+
+  h1 {
+    margin: 0 0 22px;
+    font-family: var(--sans);
+    font-size: 52.8px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .story-description {
+    max-width: 760px;
+    margin: 0;
+    color: var(--muted);
+    font-family: Georgia, Times, serif;
+    font-size: 28.8px;
+    font-style: italic;
+    line-height: 1.3;
+    text-wrap: pretty;
+  }
+
+  .story-context {
+    margin: 20px 0 0;
+    color: var(--muted);
+    font-family: 'Fira Mono', monospace;
+    font-size: 13px;
+  }
+
+  .story-content {
+    min-width: 0;
+  }
+
+  .story-content :global(.story-section) {
+    margin-top: 110px;
+  }
+  .story-content :global(.story-section[aria-labelledby='checking']) {
+    margin-top: 48px;
+  }
+  .story-content :global(details) {
+    max-width: 800px;
+    margin: 24px auto;
+  }
+  .story-content :global(summary) {
+    padding: 14px 0;
+    cursor: pointer;
+    border-bottom: 1px solid #505550;
+    color: var(--text);
+    font-size: var(--story-body-size);
+  }
+  .figure-dialog {
+    width: min(1280px, 96vw);
+    max-width: 96vw;
+    max-height: 90vh;
+    padding: 20px;
+    background: var(--background);
+    color: var(--text);
+    border: 1px solid #68706c;
+  }
+  .figure-dialog::backdrop {
+    background: rgb(0 0 0 / 80%);
+  }
+  .close-figure {
+    display: block;
+    margin: 0 0 20px auto;
+    padding: 8px 12px;
+    border: 1px solid #68706c;
+    background: var(--background);
+    color: var(--text);
+    font-family: 'Fira Mono', monospace;
+    cursor: pointer;
+  }
+  .expanded-image {
+    overflow: auto;
+    max-height: 72vh;
+  }
+  .expanded-image img {
+    width: max(800px, 100%);
+    max-width: none;
+    height: auto;
+  }
+
+  .story-content :global(h2) {
+    max-width: 760px;
+    margin: 0 auto 20px;
+    font-family: var(--sans);
+    font-size: 36px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: normal;
+  }
+
+  .story-content :global(p) {
+    max-width: 760px;
+    margin: 18px auto;
+    font-family: 'Fira Mono', monospace;
+  }
+
+  .story-content :global(code) {
+    font-family: 'Fira Mono', monospace;
+    font-size: 0.88em;
+    overflow-wrap: anywhere;
+  }
+
+  .story-content :global(.experiment-context) {
+    color: var(--muted);
+    font-size: var(--story-body-size);
+  }
+  .story-content :global(.gpu-name) {
+    color: #e4bb7a;
+    font-weight: 700;
+  }
+
+  .story-content :global(figure) {
+    width: 100%;
+    max-width: 800px;
+    min-width: 0;
+    margin: 32px auto;
+  }
+
+  .story-content :global(.figure-link) {
+    display: block;
+    box-shadow:
+      0 0 0 2.4px #000,
+      8px 8px 0 #000;
+  }
+
+  .story-content :global(.figure-link:hover),
+  .story-content :global(.figure-link:focus-visible) {
+    box-shadow:
+      0 0 0 2.4px var(--accent),
+      8px 8px 0 var(--accent);
+  }
+
+  .story-content :global(.figure-link img) {
+    width: 100%;
+    height: auto;
+  }
+
+  .story-content :global(figcaption) {
+    max-width: 760px;
+    margin: 14px auto 0;
+    color: var(--muted);
+    font-size: var(--story-body-size);
+    line-height: 1.65;
+  }
+
+  @media (max-width: 700px) {
+    .project-story {
+      padding: 24px 22px 56px;
+      --story-body-size: 16px;
+    }
+    .story-nav {
+      font-size: 12px;
+    }
+    .story-header {
+      margin-top: 36px;
+      margin-bottom: 28px;
+    }
+    h1 {
+      margin-bottom: 14px;
+      font-size: 35.2px;
+    }
+    .story-description {
+      font-size: 22px;
+    }
+    .story-context {
+      font-size: 12px;
+    }
+    .story-content :global(h2) {
+      font-size: 28px;
+    }
+    .story-content :global(.story-section) {
+      margin-top: 76px;
+    }
+  }
+</style>
