@@ -167,6 +167,9 @@ const { eyebrow, title, description, repository, weightsUrl } = Astro.props;
   .story-content :global(.story-section) {
     margin-top: 110px;
   }
+  .story-content :global(.story-section[aria-labelledby='outputs']) {
+    margin-top: 64px;
+  }
   .story-content :global(.story-section[aria-labelledby='checking']) {
     margin-top: 48px;
   }
@@ -306,6 +309,9 @@ const { eyebrow, title, description, repository, weightsUrl } = Astro.props;
     }
     .story-content :global(.story-section) {
       margin-top: 76px;
+    }
+    .story-content :global(.story-section[aria-labelledby='outputs']) {
+      margin-top: 48px;
     }
   }
 </style>
