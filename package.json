@@ -10,6 +10,7 @@
     "dev": "astro dev --host 0.0.0.0 --port 4321",
     "check": "astro check",
     "build": "astro build",
+    "deploy": "npm run build && surge ./dist publish",
     "preview": "astro preview --host 0.0.0.0 --port 4321",
     "format": "prettier --write \"src/**/*.{astro,ts,md,mdx,css}\" \"scripts/*.mjs\" \"*.json\" \"*.mjs\" \".github/**/*.yml\" \"templates/*.md\" \"GLOSSARY.md\"",
     "format:check": "prettier --check \"src/**/*.{astro,ts,md,mdx,css}\" \"scripts/*.mjs\" \"*.json\" \"*.mjs\" \".github/**/*.yml\" \"templates/*.md\" \"GLOSSARY.md\""
@@ -26,6 +27,7 @@
     "prettier": "3.9.10",
     "prettier-plugin-astro": "1.1.1",
     "sharp": "0.35.5",
+    "surge": "0.44.7",
     "typescript": "6.0.3"
   }
 }
